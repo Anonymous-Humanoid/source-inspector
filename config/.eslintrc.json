@@ -1,0 +1,10 @@
+{
+    "extends": "react-app",
+    "globals": {
+        "chrome": "readonly"
+    },
+    "rules": {
+        "semi": ["error", "always"],
+        "no-extra-semi": ["error", "always"]
+    }
+}

@@ -1,0 +1,16 @@
+{
+    "editor.formatOnSave": true,
+    "typescript.tsdk": "./node_modules/typescript/lib",
+    "prettier.configPath": "./config/.prettierrc",
+    "prettier.ignorePath": "./config/.prettierignore",
+    "markdownlint.configFile": "./config/.markdownlint-cli2.jsonc",
+    "eslint.options": {
+        "overrideConfigFile": "./config/.eslintrc.json"
+    },
+    "search.exclude": {
+        "**/*.bundle.js": true,
+        "**/node_modules": true,
+        "**/bower_components": true,
+        "package-lock.json": true
+    }
+}

@@ -1,0 +1,28 @@
+{
+    "verbose": true,
+    "ignore": [
+        "/dist",
+        "/build",
+        "/coverage",
+        "/.vscode",
+        "/.git",
+        "/config"
+    ],
+    "watch": [
+        "config/webpack.config.cjs",
+        "config/webserver.cjs",
+        "src/react-app-env.d.ts",
+        "package-lock.json",
+        "tsconfig.json",
+        ".babelrc"
+    ],
+    "env": {
+        "NODE_ENV": "development",
+        "BABEL_ENV": "development",
+        "ASSET_PATH": "/",
+        "OUTPUT_DIR": "build",
+        "PACKAGE_NAME": "(DEV BRANCH) source-inspector",
+        "PACKAGE_DESCRIPTION": "DEVELOPER USE ONLY - DO NOT PUBLISH"
+    },
+    "ext": "json,js,ts,babelrc"
+}

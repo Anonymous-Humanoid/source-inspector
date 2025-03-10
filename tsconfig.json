@@ -1,0 +1,38 @@
+{
+    "compilerOptions": {
+        "target": "ES2020",
+        "lib": [
+            // General JS
+            "ESNext",
+
+            // Web interfaces
+            "dom",
+            "dom.iterable",
+
+            // Asynchronocity and promises
+            "ES2020.Promise",
+            "ESNext.asynciterable"
+        ],
+        "allowJs": true,
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "strict": true,
+        "forceConsistentCasingInFileNames": true,
+        "noFallthroughCasesInSwitch": true,
+        "module": "ESNext",
+        "moduleResolution": "node",
+        "resolveJsonModule": true,
+        "noEmit": false,
+        "jsx": "react",
+
+        // Fixes complaints of 'bonjour' being an implicit entry point
+        "typeRoots": ["./node_modules/@types"]
+    },
+    "include": ["src"],
+    "exclude": ["build", "dist", "node_modules", "zip"],
+    "ts-node": {
+        "compilerOptions": {
+            "module": "CommonJS"
+        }
+    }
+}

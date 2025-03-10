@@ -1,0 +1,16 @@
+# Dependencies
+/node_modules
+
+# Testing
+/test
+/coverage
+
+# Build outputs
+/build
+/dist
+
+# Secrets
+/.git
+.env
+.env.*
+secrets.*.js

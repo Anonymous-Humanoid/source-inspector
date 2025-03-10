@@ -1,0 +1,10 @@
+// Reference: https://github.com/DavidAnson/markdownlint-cli2?tab=readme-ov-file#markdownlint-cli2jsonc
+{
+    "config": {
+        "line-length": false,
+        "no-hard-tabs": true
+    },
+    "globs": [
+        "!**/LICENSE" // Ignore LICENSE files, because they shouldn't be modified
+    ]
+}
