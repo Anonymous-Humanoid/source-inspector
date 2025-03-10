@@ -1,7 +1,7 @@
 {
     "name": "source-inspector",
     "version": "1.0.0",
-    "description": "A from-scratch open-sorce document source inspector that aims to be invisible to websites",
+    "description": "A from-scratch open-source document source inspector that aims to be invisible to websites",
     "license": "MIT",
     "private": true,
     "repository": {
