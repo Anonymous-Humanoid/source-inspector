@@ -1,5 +1,7 @@
 # source-inspector
 
+[![License][license-image]][license-url]
+
 Note: This extension currently only supports desktop devices using Chrome or
 Chromium derivatives, such as Edge.
 
@@ -137,3 +139,6 @@ For a list of known issues and planned features, see the [TODOs](TODO.md)
 - My own [extension boilerplate](https://github.com/Anonymous-Humanoid/chromium-extension-boilerplate)
 - [Code review icons](https://www.flaticon.com/free-icons/code-review) created
 by Freepik - Flaticon
+
+[license-image]: https://img.shields.io/npm/l/markdownlint.svg
+[license-url]: https://opensource.org/licenses/MIT
