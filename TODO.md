@@ -2,6 +2,9 @@
 
 ## Functional Priorities
 
+- Remove `chrome.d.ts` when
+  [DefinitelyTyped PR #72170](https://github.com/DefinitelyTyped/DefinitelyTyped/pull/72170)
+  is merged and published to prod
 - Extension icon is not rendering in the extension toolbar
 - For security reasons, validate all messages to ensure no compromisation
   has occurred within any untrustworthy part of the extension
