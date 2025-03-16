@@ -63,7 +63,7 @@ class Popup {
                 tabId
                 // allFrames: true
             },
-            files: ['docListener.bundle.js'],
+            files: ['popup/docListener.js'],
             world: 'ISOLATED'
         });
     }
@@ -102,7 +102,7 @@ class Popup {
 
         // Opening popup (requires extension split to run in incognito)
         let popup = await chrome.tabs.create({
-            url: chrome.runtime.getURL('popup.html')
+            url: chrome.runtime.getURL('popup/index.html')
         });
         const POPUP_ID = popup.id!;
 

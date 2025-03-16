@@ -2,15 +2,12 @@
 
 ## Functional Priorities
 
-- Add separate icons for dev/prod branches to more easily differentiate
 - For security reasons, validate all messages to ensure no compromisation
   has occurred within any untrustworthy part of the extension
   (see: the [issue tracker](https://issuetracker.google.com/issues/311491887)
   and the referenced
   [docs](https://chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/security/compromised-renderers.md#Messaging))
-- Tell the user when it cannot inspect a protected page
-- Replace host permissions with the active tab permission to minimize
-  permissions
+- Tell the user when a protected page cannot be inspected
 - Add documentation where it's missing or necessary (e.g, @param or @returns)
 - Fix `ul` CSS
   - Remove unnecessary whitespace
@@ -37,8 +34,8 @@
   for increased maintainability
 - Only send ACKs from the StateManager when necessary
 - ChildManager prop drills `nodes`:
-  use a shared context to manage deep node state
-- Format VS Code editor on save
+  use a shared context and provider (in ChildManager) to manage deep node state
+- Format VS Code editor on save with Prettier
 - Ensure ESLint config file path is correctly recognized and interpreted
 - Add a light mode:
   

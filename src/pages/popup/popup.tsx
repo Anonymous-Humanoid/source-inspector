@@ -73,7 +73,7 @@ export default function StateManager() {
         // Notifying content script we've received the last message
         let ack: ReceivedMsg = { type: 'received' };
         
-        connection!.postMessage(ack);
+        connection?.postMessage(ack);
     }
     
     // Configuring connection effect
