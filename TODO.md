@@ -2,10 +2,7 @@
 
 ## Functional Priorities
 
-- Remove `chrome.d.ts` when
-  [DefinitelyTyped PR #72170](https://github.com/DefinitelyTyped/DefinitelyTyped/pull/72170)
-  is merged and published to prod
-- Extension icon is not rendering in the extension toolbar
+- Add separate icons for dev/prod branches to more easily differentiate
 - For security reasons, validate all messages to ensure no compromisation
   has occurred within any untrustworthy part of the extension
   (see: the [issue tracker](https://issuetracker.google.com/issues/311491887)
@@ -55,8 +52,6 @@
 ## Future Priorities
 
 - Create and add donation medium
-- Migrate CommonJS config files to TypeScript by modifying the Nodemon configs
-  and/or the package.json scripts
 - Use TypeScript namespaces for code separation
 - Modify ESLint config:
   - Currently using deprecated rules, see:

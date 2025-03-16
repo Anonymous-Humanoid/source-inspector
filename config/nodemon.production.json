@@ -1,5 +1,5 @@
 {
-    "exec": "webpack -c",
+    "exec": "npx ts-node config/webserver.ts",
     "verbose": true,
     "ignore": [
         "/dist",
@@ -10,9 +10,10 @@
         "/config"
     ],
     "watch": [
-        "config/webpack.config.cjs",
-        "src/react-app-env.d.ts",
-        "package-lock.json",
+        "./config/webserver.ts",
+        "./config/webpack.config.ts",
+        "./src/react-app-env.d.ts",
+        "./package-lock.json",
         "tsconfig.json",
         ".babelrc"
     ],
@@ -24,5 +25,5 @@
         "PACKAGE_NAME": "source-inspector",
         "PACKAGE_DESCRIPTION": "A from-scratch open-source document source inspector that aims to be invisible to websites"
     },
-    "ext": "json,js,ts,babelrc"
+    "ext": "json,cjs,mjs,js,ts,babelrc"
 }

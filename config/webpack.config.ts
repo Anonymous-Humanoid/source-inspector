@@ -1,14 +1,13 @@
-// CommonJS module: Cannot use import here
-const webpack = require('webpack');
-const path = require('path');
-const CopyWebpackPlugin = require('copy-webpack-plugin');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-const TerserPlugin = require('terser-webpack-plugin');
-const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+import { CleanWebpackPlugin } from 'clean-webpack-plugin';
+import CopyWebpackPlugin from 'copy-webpack-plugin';
+import HtmlWebpackPlugin from 'html-webpack-plugin';
+import path from 'path';
+import TerserPlugin from 'terser-webpack-plugin';
+import webpack from 'webpack';
 
 // Non-secret env vars are defined in nodemon config
 const NODE_ENV = process.env.NODE_ENV;
-const OUTPUT_DIR = /** @type {string} */ (process.env.OUTPUT_DIR);
+const OUTPUT_DIR = process.env.OUTPUT_DIR!;
 const DIRNAME = path.join(__dirname, '..');
 
 // Verifying node env
@@ -16,7 +15,8 @@ if (NODE_ENV == null) {
     throw new Error('Node environment must be specified');
 }
 
-// Configuring webpack
+const IS_DEV_MODE = process.env.NODE_ENV !== 'production';
+
 const FILE_EXTS = [
     'jpg',
     'jpeg',
@@ -30,10 +30,16 @@ const FILE_EXTS = [
     'woff2',
 ];
 
-const IS_DEV_MODE = process.env.NODE_ENV !== 'production';
+// Copying icons
+const VALID_SIZES = [16, 24, 32, 48, 56, 64, 96, 128].map((size) => size.toString());
+let iconFileNames: { [size: string]: string } = {};
 
-/** @type {webpack.Configuration} */
-let config = {
+VALID_SIZES.forEach((size) => {
+    iconFileNames[size] = `icon-${size}.png`;
+});
+
+// Initializing webpack config
+let config: webpack.Configuration = {
     mode: IS_DEV_MODE ? 'development' : 'production',
     devtool: IS_DEV_MODE ? 'cheap-module-source-map' : undefined,
     optimization: IS_DEV_MODE ? undefined : {
@@ -60,7 +66,10 @@ let config = {
             .map((extension) => '.' + extension)
             .concat([
                 '.ts', '.tsx', // TS/TSX must come before JS/JSX
-                '.js', '.jsx', '.css']),
+                '.cjs', '.mjs',
+                '.js', '.jsx',
+                '.css'
+            ]),
     },
     devServer: {
         hot: true
@@ -131,7 +140,17 @@ let config = {
         new CleanWebpackPlugin({ verbose: false }),
         new webpack.ProgressPlugin(),
         
-        // TODO Separate outputs into different folders (filename supports subdirectories)
+        // TODO Separate outputs into different folders (HtmlWebpackPlugin filename supports subdirectories)
+        ...(Object.values(iconFileNames).map((filename) => new CopyWebpackPlugin({
+            patterns: [
+                {
+                    from: path.join(DIRNAME, 'src', 'assets', 'img', filename),
+                    to: path.join(DIRNAME, OUTPUT_DIR),
+                    force: true,
+                }
+            ]
+        }))),
+        
         new HtmlWebpackPlugin({
             template: path.join(DIRNAME, 'src', 'pages', 'popup', 'index.html'),
             filename: 'popup.html',
@@ -154,9 +173,9 @@ let config = {
                                 name: process.env.PACKAGE_NAME,
                                 description: process.env.PACKAGE_DESCRIPTION,
                                 action: {
-                                    default_icon: icons
+                                    default_icon: iconFileNames
                                 },
-                                icons
+                                icons: iconFileNames
                             })
                         );
                     }
@@ -169,34 +188,8 @@ let config = {
     }
 };
 
-// Copying icons
-const VALID_SIZES = [16, 24, 32, 48, 56, 64, 96, 128];
-let icons = {};
-
-if (config.plugins == null) {
-    config.plugins = [];
-}
-
-for (let s of VALID_SIZES) {
-    let size = s.toString();
-    let filename = `icon-${size}.jpeg`;
-
-    icons[size] = filename;
-
-    config.plugins.push(
-        new CopyWebpackPlugin({
-            patterns: [
-                {
-                    from: path.join(DIRNAME, 'src', 'assets', 'img', filename),
-                    to: path.join(DIRNAME, OUTPUT_DIR),
-                    force: true,
-                }
-            ]
-        })
-    );
-}
-
-// Webpack >= 2.0.0 no longer allows custom properties in configuration
+// Module exports must be immutable
 const FINAL_CONFIG = config;
 
-module.exports = FINAL_CONFIG;
+// Webpack >= 2.0.0 no longer allows custom properties in configuration
+export default FINAL_CONFIG;

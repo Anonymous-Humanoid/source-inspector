@@ -1,4 +1,5 @@
 {
+    "exec": "npx ts-node config/webserver.ts",
     "verbose": true,
     "ignore": [
         "/dist",
@@ -9,9 +10,9 @@
         "/config"
     ],
     "watch": [
-        "config/webpack.config.cjs",
-        "config/webserver.cjs",
-        "src/react-app-env.d.ts",
+        "./config/webserver.ts",
+        "./config/webpack.config.ts",
+        "./src/react-app-env.d.ts",
         "package-lock.json",
         "tsconfig.json",
         ".babelrc"
@@ -24,5 +25,5 @@
         "PACKAGE_NAME": "(DEV BRANCH) source-inspector",
         "PACKAGE_DESCRIPTION": "DEVELOPER USE ONLY - DO NOT PUBLISH"
     },
-    "ext": "json,js,ts,babelrc"
+    "ext": "json,cjs,mjs,js,ts,babelrc"
 }

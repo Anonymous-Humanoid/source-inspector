@@ -14,7 +14,7 @@ import { StoredVirtualCommentProps } from './components/comment';
 // TODO VirtualNodeType UI indentation
 // TODO Documentation
 
-function insertBesidePrevSibling(
+function insertAfterSibling(
     childNodeIds: string[],
     prevSiblingId: string | undefined,
     id: string
@@ -30,7 +30,8 @@ function insertBesidePrevSibling(
     for (let siblingId of childNodeIds) {
         if (prevSiblingFound) {
             nextSiblingIds.push(siblingId);
-        } else {
+        } 
+        else {
             prevSiblingIds.push(siblingId);
 
             if (siblingId === prevSiblingId) {
@@ -124,7 +125,7 @@ export default function StateManager() {
                         ...prevNodes,
                         [parentId]: {
                             ...prevNodes[parentId],
-                            childNodeIds: insertBesidePrevSibling(
+                            childNodeIds: insertAfterSibling(
                                 prevNodes[parentId].childNodeIds,
                                 msg.prevSiblingId,
                                 msg.id
@@ -157,7 +158,7 @@ export default function StateManager() {
                         ...prevNodes,
                         [parentId]: {
                             ...prevNodes[parentId],
-                            childNodeIds: insertBesidePrevSibling(
+                            childNodeIds: insertAfterSibling(
                                 prevNodes[parentId].childNodeIds,
                                 msg.prevSiblingId,
                                 msg.id
@@ -203,7 +204,7 @@ export default function StateManager() {
                             ...prevNodes,
                             [parentId]: {
                                 ...prevNodes[parentId],
-                                childNodeIds: insertBesidePrevSibling(
+                                childNodeIds: insertAfterSibling(
                                     prevNodes[parentId].childNodeIds,
                                     msg.prevSiblingId,
                                     msg.id
@@ -240,7 +241,7 @@ export default function StateManager() {
                         ...prevNodes,
                         [parentId]: {
                             ...prevNodes[parentId],
-                            childNodeIds: insertBesidePrevSibling(
+                            childNodeIds: insertAfterSibling(
                                 prevNodes[parentId].childNodeIds,
                                 msg.prevSiblingId,
                                 msg.id

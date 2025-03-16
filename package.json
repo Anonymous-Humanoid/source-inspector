@@ -10,9 +10,9 @@
     },
     "scripts": {
         "start": "npm run start:dev",
-        "start:dev": "nodemon --config config/nodemon.development.json config/webserver.cjs",
-        "start:prod": "nodemon --config config/nodemon.production.json config/webpack.config.cjs",
-        "prettier": "prettier --write **/*.{js,jsx,ts,tsx,json,css,scss,html}",
+        "start:dev": "nodemon --config config/nodemon.development.json",
+        "start:prod": "nodemon --config config/nodemon.production.json",
+        "prettier": "prettier --write **/*.{cjs,mjs,js,jsx,ts,tsx,json,css,scss,html}",
         "test": "echo \"Error: no test specified\" && exit 1"
     },
     "dependencies": {
@@ -58,6 +58,7 @@
         "style-loader": "^3.3.1",
         "terser-webpack-plugin": "^5.3.6",
         "ts-loader": "^9.4.2",
+        "ts-node": "^10.9.2",
         "type-fest": "^3.5.2",
         "typescript": "^5.7.2",
         "webpack": "^5.98.0",

@@ -29,6 +29,11 @@ ul {
     display: block;
 }
 
+.debug {
+    display: inline;
+    color: magenta;
+}
+
 .text {
     display: inline;
     color: white;
