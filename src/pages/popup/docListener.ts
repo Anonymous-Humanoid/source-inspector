@@ -65,12 +65,12 @@ type PartialMutationRecord =
     async function _releaseMsgMutex() {
         if (_mutexRelease == null) {
             console.warn('Messaging mutex already released');
-            
+
             return;
         }
-        
+
         _mutexRelease();
-        
+
         _mutexRelease = undefined;
     }
 
@@ -80,7 +80,7 @@ type PartialMutationRecord =
      */
     async function _sendMessage(msg: PopupMsg): Promise<void> {
         await _acquireMsgMutex();
-        
+
         _connection?.postMessage(msg);
     }
 
@@ -195,7 +195,10 @@ type PartialMutationRecord =
                     break;
                 }
                 case Node.DOCUMENT_NODE: {
-                    let parentId = mutation.target == null ? undefined : _getId(mutation.target);
+                    let parentId =
+                        mutation.target == null
+                            ? undefined
+                            : _getId(mutation.target);
                     let doc = node as Document;
                     let msg: UpdateDocumentMsg = {
                         type: 'update',
@@ -225,7 +228,7 @@ type PartialMutationRecord =
                         systemId: doctype.systemId,
                         parentId
                     };
-                    
+
                     _sendMessage(msg);
                     break;
                 }

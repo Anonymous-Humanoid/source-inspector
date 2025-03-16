@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { ChildManager, NodeState } from './childManager';
-import { StoredVirtualDoctypeProps, StoredVirtualDocumentProps, StoredVirtualElementProps } from './components';
+import {
+    StoredVirtualDoctypeProps,
+    StoredVirtualDocumentProps,
+    StoredVirtualElementProps
+} from './components';
 import {
     ConnectMsg,
     PopupMsg,
@@ -30,8 +34,7 @@ function insertAfterSibling(
     for (let siblingId of childNodeIds) {
         if (prevSiblingFound) {
             nextSiblingIds.push(siblingId);
-        } 
-        else {
+        } else {
             prevSiblingIds.push(siblingId);
 
             if (siblingId === prevSiblingId) {
@@ -61,21 +64,20 @@ export default function StateManager() {
     let [connection, setConnection] = useState<
         chrome.runtime.Port | undefined
     >();
-    
+
     if (firstRun && root == null) {
         // Notifying background page we're ready to connect
         setFirstRun(false);
         chrome.runtime.onMessage.addListener(generateDocument);
         chrome.runtime.sendMessage({});
         console.log('Popup ready to connect!');
-    }
-    else if (root != null) {
+    } else if (root != null) {
         // Notifying content script we've received the last message
         let ack: ReceivedMsg = { type: 'received' };
-        
+
         connection?.postMessage(ack);
     }
-    
+
     // Configuring connection effect
     // NOTE: Due to the cleanup function, this effect shouldn't
     // work correctly in development with React strict mode enabled.
@@ -92,7 +94,7 @@ export default function StateManager() {
             newConnection.onMessage.addListener(updateDocument);
 
             connection = newConnection;
-            
+
             console.log(`Successfully connected to tab ${tabId}!`);
         }
 
@@ -224,7 +226,7 @@ export default function StateManager() {
                     console.error(`Anomalous node parent update:`, msg);
                     return;
                 }
-                
+
                 let state: StoredVirtualDoctypeProps = {
                     nodeType: msg.nodeType,
                     nodeName: msg.nodeName,
@@ -235,7 +237,7 @@ export default function StateManager() {
                     childNodeIds: [],
                     parentId
                 };
-                
+
                 setNodes((prevNodes) => {
                     return {
                         ...prevNodes,

@@ -8,7 +8,10 @@ import {
     VirtualDocument,
     VirtualElement
 } from './components';
-import { StoredVirtualCommentProps, VirtualComment } from './components/comment';
+import {
+    StoredVirtualCommentProps,
+    VirtualComment
+} from './components/comment';
 
 export type NodeState = { [id: string]: StoredVirtualNodeProps };
 
@@ -18,7 +21,11 @@ interface ChildManagerProps {
 }
 
 function renderDebug(props: Readonly<ChildManagerProps>): ReactNode {
-    return process.env.NODE_ENV !== 'production' && <p className='debug'>{props.id}</p>;
+    return (
+        process.env.NODE_ENV !== 'production' && (
+            <p className='debug'>{props.id}</p>
+        )
+    );
 }
 
 function renderChildren(
@@ -114,7 +121,7 @@ function renderElement(
 
 export function ChildManager(props: Readonly<ChildManagerProps>) {
     let node = props.nodes[props.id];
-    
+
     switch (node.nodeType) {
         case Node.ELEMENT_NODE: {
             return renderElement(props, node as StoredVirtualElementProps);

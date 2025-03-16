@@ -22,18 +22,22 @@ const IS_DEV_MODE = process.env.NODE_ENV !== 'production';
 
 // Copying icons
 const VALID_SIZES = [16, 32, 48, 128].map((size) => size.toString());
-let relativeIconPaths = [...new Map<string, [string, string]>(VALID_SIZES.map((size) => [
-    size,
-    [
-        `${NODE_ENV}-icon-${size}.png`, // Input
-        path.join('icons', `icon-${size}.png`) // Output
-    ]
-])).entries()];
+let relativeIconPaths = [
+    ...new Map<string, [string, string]>(
+        VALID_SIZES.map((size) => [
+            size,
+            [
+                `${NODE_ENV}-icon-${size}.png`, // Input
+                path.join('icons', `icon-${size}.png`) // Output
+            ]
+        ])
+    ).entries()
+];
 
 // Generating manifest file
 const BACKGROUND_OUTPUT_PATH = path.join('background', 'index.js');
 let manifestIconPaths: { [size: string]: string } = {};
-                        
+
 relativeIconPaths.forEach(([size, [inputPath, outputPath]]) => {
     manifestIconPaths[size] = outputPath;
 });
@@ -48,10 +52,7 @@ const MANIFEST: chrome.runtime.ManifestV3 = {
         email: 'ninth-blast-royal@duck.com'
     },
     minimum_chrome_version: '93',
-    permissions: [
-        'scripting',
-        'activeTab'
-    ],
+    permissions: ['scripting', 'activeTab'],
     incognito: 'split',
     background: {
         service_worker: BACKGROUND_OUTPUT_PATH
@@ -78,28 +79,34 @@ const STATIC_FILE_EXTS = [
 const CONFIG: webpack.Configuration = {
     mode: IS_DEV_MODE ? 'development' : 'production',
     devtool: IS_DEV_MODE ? 'cheap-module-source-map' : undefined,
-    optimization: IS_DEV_MODE ? undefined : {
-        minimize: true,
-        minimizer: [
-            new TerserPlugin({
-                extractComments: false
-            })
-        ]
-    },
+    optimization: IS_DEV_MODE
+        ? undefined
+        : {
+              minimize: true,
+              minimizer: [
+                  new TerserPlugin({
+                      extractComments: false
+                  })
+              ]
+          },
     entry: {
         // Popup
         docListener: {
-            import: [path.join(DIRNAME, 'src', 'pages', 'popup', 'docListener.ts')],
+            import: [
+                path.join(DIRNAME, 'src', 'pages', 'popup', 'docListener.ts')
+            ],
             filename: path.join('popup', 'docListener.js')
         },
         popup: {
             import: [path.join(DIRNAME, 'src', 'pages', 'popup', 'index.tsx')],
             filename: path.join('popup', 'index.js').replaceAll('\\', '/') // HTMLWebpackPlugin requires forward slashes
         },
-        
+
         // Background
         background: {
-            import: [path.join(DIRNAME, 'src', 'pages', 'background', 'index.ts')],
+            import: [
+                path.join(DIRNAME, 'src', 'pages', 'background', 'index.ts')
+            ],
             filename: BACKGROUND_OUTPUT_PATH
         }
     },
@@ -110,14 +117,17 @@ const CONFIG: webpack.Configuration = {
         publicPath: process.env.ASSET_PATH
     },
     resolve: {
-        extensions: STATIC_FILE_EXTS
-            .map((extension) => '.' + extension)
-            .concat([
-                '.ts', '.tsx', // TS/TSX must come before JS/JSX
-                '.cjs', '.mjs', // CJS/MJS before JS
-                '.js', '.jsx',
+        extensions: STATIC_FILE_EXTS.map((extension) => '.' + extension).concat(
+            [
+                '.ts',
+                '.tsx', // TS/TSX must come before JS/JSX
+                '.cjs',
+                '.mjs', // CJS/MJS before JS
+                '.js',
+                '.jsx',
                 '.css'
-            ]),
+            ]
+        )
     },
     devServer: {
         hot: true
@@ -130,7 +140,7 @@ const CONFIG: webpack.Configuration = {
                 type: 'asset/resource',
                 exclude: /node_modules/
             },
-            
+
             // CSS/SCSS/SASS
             {
                 test: /\.(css|scss|sass)$/,
@@ -149,14 +159,14 @@ const CONFIG: webpack.Configuration = {
                     }
                 ]
             },
-            
+
             // HTML
             {
                 test: /\.html$/,
                 loader: 'html-loader',
                 exclude: /node_modules/
             },
-            
+
             // TS/TSX (must come before JS/JSX)
             {
                 test: /\.(ts|tsx)$/,
@@ -170,7 +180,7 @@ const CONFIG: webpack.Configuration = {
                     }
                 ]
             },
-            
+
             // CJS/MJS/JS/JSX
             {
                 test: /\.(cjs|mjs|js|jsx)$/,
@@ -180,7 +190,7 @@ const CONFIG: webpack.Configuration = {
                         loader: 'source-map-loader'
                     },
                     {
-                        loader: require.resolve('babel-loader'),
+                        loader: require.resolve('babel-loader')
                     }
                 ]
             }
@@ -190,20 +200,26 @@ const CONFIG: webpack.Configuration = {
         // Setting up fresh Webpack environment
         new CleanWebpackPlugin({ verbose: false }),
         new webpack.ProgressPlugin(),
-        
+
         // Packaging icons
         ...relativeIconPaths.map(([size, [inputPath, outputPath]]) => {
             return new CopyWebpackPlugin({
                 patterns: [
                     {
-                        from: path.join(DIRNAME, 'src', 'assets', 'icons', inputPath),
+                        from: path.join(
+                            DIRNAME,
+                            'src',
+                            'assets',
+                            'icons',
+                            inputPath
+                        ),
                         to: path.join(DIRNAME, OUTPUT_DIR, outputPath),
                         force: true
                     }
                 ]
             });
         }),
-        
+
         // Packaging popup entry point
         new HtmlWebpackPlugin({
             template: path.join(DIRNAME, 'src', 'pages', 'popup', 'index.html'),
@@ -211,7 +227,7 @@ const CONFIG: webpack.Configuration = {
             chunks: ['popup'],
             cache: false
         }),
-        
+
         // Generating manifest file
         new GenerateJsonPlugin(
             'manifest.json',
@@ -226,7 +242,7 @@ const CONFIG: webpack.Configuration = {
         )
     ].filter(Boolean),
     infrastructureLogging: {
-        level: 'info',
+        level: 'info'
     }
 };
 

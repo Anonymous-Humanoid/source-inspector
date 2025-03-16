@@ -12,7 +12,7 @@
         "start": "npm run start:dev",
         "start:dev": "nodemon --config config/nodemon.development.json",
         "start:prod": "nodemon --config config/nodemon.production.json",
-        "prettier": "prettier --write **/*.{cjs,mjs,js,jsx,ts,tsx,json,css,scss,html}",
+        "prettier": "prettier --write **/*.{cjs,mjs,js,jsx,ts,tsx,json,css,scss,html} --config config/.prettierrc --ignore-path config/.prettierignore",
         "test": "echo \"Error: no test specified\" && exit 1"
     },
     "dependencies": {
