@@ -8,7 +8,6 @@ interface SharedValues {
     nodeName: string;
     nodeValue: null;
     attributes: {};
-    prevSiblingId?: undefined;
     publicId: string;
     systemId: string;
     children?: never[];
