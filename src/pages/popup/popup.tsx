@@ -74,12 +74,11 @@ export default function StateManager() {
         chrome.runtime.onMessage.addListener(generateDocument);
         chrome.runtime.sendMessage({});
         console.log('Popup ready to connect!');
-    }
-    else if (queue.length > 0) {
+    } else if (queue.length > 0) {
         // Sending queued messages
         // Relies on state 'nodes', so only one message is processed per render
         const msg = queue.shift()!;
-        
+
         handleMessage(msg);
         setQueue((queue) => queue.slice(1));
     }
@@ -130,7 +129,7 @@ export default function StateManager() {
                     prevSiblingId == null
                         ? []
                         : ['\nUnexpected prevSiblingId:', prevSiblingId];
-                
+
                 console.error(...rootMsg, ...siblingMsg);
                 return;
             }
@@ -144,7 +143,7 @@ export default function StateManager() {
             });
             return;
         }
-            
+
         // Handling child node, possibly with siblings
         // If the node already exists, it's moved to its new location
         setNodes((prevNodes) => {
@@ -153,7 +152,9 @@ export default function StateManager() {
                 [parentId]: {
                     ...prevNodes[parentId],
                     childNodeIds: insertAfterSibling(
-                        prevNodes[parentId].childNodeIds.filter((childId) => childId != id),
+                        prevNodes[parentId].childNodeIds.filter(
+                            (childId) => childId != id
+                        ),
                         prevSiblingId,
                         id
                     )
@@ -175,30 +176,32 @@ export default function StateManager() {
         }
 
         setNodes((prevNodes) => {
-            let nextNodes = {...prevNodes};
+            let nextNodes = { ...prevNodes };
             let node = nextNodes[id];
             let parentId = node.parentId;
             let childNodeIds = [...node.childNodeIds];
             let currentId: string | undefined;
-            
+
             // Removing references to node
             if (parentId != null) {
-                nextNodes[parentId].childNodeIds = nextNodes[parentId].childNodeIds.filter((childId) => childId != id);
+                nextNodes[parentId].childNodeIds = nextNodes[
+                    parentId
+                ].childNodeIds.filter((childId) => childId != id);
             }
-            
+
             // Iteratively removing references to node children
             while ((currentId = childNodeIds.pop()) != null) {
                 let currentNode = nextNodes[currentId];
-                
+
                 childNodeIds.push(...currentNode.childNodeIds);
-                
+
                 delete nextNodes[currentId];
             }
-            
+
             return nextNodes;
-        })
+        });
     }
-    
+
     function updateNodeHandler(msg: UpdateMsg): void {
         switch (msg.nodeType) {
             case Node.ELEMENT_NODE: {
@@ -298,21 +301,21 @@ export default function StateManager() {
 
     /**
      * Places the given message into a queue for processing
-     * @param msg 
+     * @param msg
      */
     function queueMessage(msg: PopupMsg): void {
         setQueue((queue) => [...queue, msg]);
-        
+
         // Notifying content script we've received the last message
         let ack: ReceivedMsg = { type: 'received' };
 
         connection?.postMessage(ack);
     }
-    
+
     /**
      * Processes the given message, resulting in a
      * virtual DOM tree modification if successful
-     * @param msg 
+     * @param msg
      */
     function handleMessage(msg: PopupMsg): void {
         switch (msg.type) {

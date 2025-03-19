@@ -161,7 +161,10 @@ type PartialMutationRecord =
             switch (node.nodeType) {
                 case Node.ELEMENT_NODE: {
                     let parentId = _getId(mutation.target!);
-                    let prevSiblingId = node.previousSibling == null ? undefined : _getId(node.previousSibling);
+                    let prevSiblingId =
+                        node.previousSibling == null
+                            ? undefined
+                            : _getId(node.previousSibling);
                     let msg: UpdateElementMsg = {
                         type: 'update',
                         id,
@@ -169,7 +172,7 @@ type PartialMutationRecord =
                         nodeType: node.nodeType,
                         nodeName: node.nodeName,
                         nodeValue: null,
-                        prevSiblingId,
+                        prevSiblingId
                     };
 
                     _sendMessage(msg);
@@ -177,7 +180,10 @@ type PartialMutationRecord =
                 }
                 case Node.COMMENT_NODE: {
                     let parentId = _getId(mutation.target!);
-                    let prevSiblingId = node.previousSibling == null ? undefined : _getId(node.previousSibling);
+                    let prevSiblingId =
+                        node.previousSibling == null
+                            ? undefined
+                            : _getId(node.previousSibling);
                     let msg: UpdateCommentMsg = {
                         type: 'update',
                         id,
@@ -214,7 +220,10 @@ type PartialMutationRecord =
                 case Node.DOCUMENT_TYPE_NODE: {
                     let doctype = node as DocumentType;
                     let parentId = _getId(mutation.target!);
-                    let prevSiblingId = node.previousSibling == null ? undefined : _getId(node.previousSibling);
+                    let prevSiblingId =
+                        node.previousSibling == null
+                            ? undefined
+                            : _getId(node.previousSibling);
                     let msg: UpdateDoctypeMsg = {
                         type: 'update',
                         id,
