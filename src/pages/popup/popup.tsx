@@ -146,13 +146,14 @@ export default function StateManager() {
         }
             
         // Handling child node, possibly with siblings
+        // If the node already exists, it's moved to its new location
         setNodes((prevNodes) => {
             return {
                 ...prevNodes,
                 [parentId]: {
                     ...prevNodes[parentId],
                     childNodeIds: insertAfterSibling(
-                        prevNodes[parentId].childNodeIds,
+                        prevNodes[parentId].childNodeIds.filter((childId) => childId != id),
                         prevSiblingId,
                         id
                     )
@@ -160,6 +161,42 @@ export default function StateManager() {
                 [id]: state
             };
         });
+    }
+
+    /**
+     * Removes the given virtual node and all
+     * of its children from the virtual DOM tree
+     * @param id The virtual node id to remove
+     */
+    function removeNode(id: string): void {
+        if (id == null || !(id in nodes)) {
+            console.error(`Anomalous node removal:`, id);
+            return;
+        }
+
+        setNodes((prevNodes) => {
+            let nextNodes = {...prevNodes};
+            let node = nextNodes[id];
+            let parentId = node.parentId;
+            let childNodeIds = [...node.childNodeIds];
+            let currentId: string | undefined;
+            
+            // Removing references to node
+            if (parentId != null) {
+                nextNodes[parentId].childNodeIds = nextNodes[parentId].childNodeIds.filter((childId) => childId != id);
+            }
+            
+            // Iteratively removing references to node children
+            while ((currentId = childNodeIds.pop()) != null) {
+                let currentNode = nextNodes[currentId];
+                
+                childNodeIds.push(...currentNode.childNodeIds);
+                
+                delete nextNodes[currentId];
+            }
+            
+            return nextNodes;
+        })
     }
     
     function updateNodeHandler(msg: UpdateMsg): void {
@@ -259,11 +296,6 @@ export default function StateManager() {
         }
     }
 
-    function removeNodeHandler(msg: RemoveMsg): void {
-        // TODO Remove nodes (Ensure no memory leaks on node removal)
-        console.error('Node removal currently unsupported:', msg);
-    }
-
     /**
      * Places the given message into a queue for processing
      * @param msg 
@@ -289,7 +321,7 @@ export default function StateManager() {
                 break;
             }
             case 'remove': {
-                removeNodeHandler(msg);
+                removeNode(msg.id);
                 break;
             }
             default: {

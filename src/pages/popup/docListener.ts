@@ -139,24 +139,17 @@ type PartialMutationRecord =
     function _removedNodesHandler(mutation: PartialNodeMutationRecord) {
         for (let node of mutation.removedNodes) {
             if (_elementMap.has(node)) {
-                if (_elementMap.has(node)) {
-                    let id = _elementMap.get(node) as string;
-                    let parentId =
-                        mutation.target == null
-                            ? undefined
-                            : _getId(mutation.target);
-                    let msg: RemoveMsg = {
-                        type: 'remove',
-                        id,
-                        parentId
-                    };
+                let id = _elementMap.get(node) as string;
+                let msg: RemoveMsg = {
+                    type: 'remove',
+                    id
+                };
 
-                    _sendMessage(msg);
-                } else {
-                    console.info('Ignoring anomalous node removal:', node);
+                _sendMessage(msg);
+            } else {
+                console.info('Ignoring anomalous node removal:', node);
 
-                    _elementMap.delete(node);
-                }
+                _elementMap.delete(node);
             }
         }
     }

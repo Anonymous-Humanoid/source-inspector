@@ -9,6 +9,9 @@
 - Add dropdown functionality to all nodes with children
 - For accessibility purposes, add the ability
   to select and navigate between elements in the inspector
+- When elements are added, children should be processed
+- Fix adding nodes with previous node IDs, as they seem to be rendered
+  out of order when, e.g, removing a node in DevTools and undoing the action
 - Render XML attributes in an XHTML document, e.g:
   
   ```xhtml
