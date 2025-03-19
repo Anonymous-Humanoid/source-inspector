@@ -24,8 +24,6 @@
         "resolveJsonModule": true,
         "noEmit": false,
         "jsx": "react",
-
-        // Fixes complaints of 'bonjour' being an implicit entry point
         "typeRoots": ["./node_modules/@types"]
     },
     "include": ["src"],

@@ -1,4 +1,4 @@
-import React, { ReactElement } from 'react';
+import React, { ReactElement, ReactNode } from 'react';
 import { StoredVirtualNodeProps } from './base';
 import {
     StoredVirtualDoctypeProps,
@@ -8,13 +8,24 @@ import {
     VirtualDocument,
     VirtualElement
 } from './components';
-import { StoredVirtualCommentProps, VirtualComment } from './components/comment';
+import {
+    StoredVirtualCommentProps,
+    VirtualComment
+} from './components/comment';
 
 export type NodeState = { [id: string]: StoredVirtualNodeProps };
 
 interface ChildManagerProps {
     id: string;
     nodes: NodeState;
+}
+
+function renderDebug(props: Readonly<ChildManagerProps>): ReactNode {
+    return (
+        process.env.NODE_ENV !== 'production' && (
+            <p className='node debug'>{props.id}</p>
+        )
+    );
 }
 
 function renderChildren(
@@ -31,16 +42,19 @@ function renderDocument(
     node: StoredVirtualDocumentProps
 ): ReactElement {
     return (
-        <VirtualDocument
-            id={props.id}
-            nodeType={node.nodeType}
-            nodeName={node.nodeName}
-            nodeValue={node.nodeValue}
-            attributes={node.attributes}
-            documentURI={node.documentURI}
-        >
-            {renderChildren(node, props.nodes)}
-        </VirtualDocument>
+        <>
+            <VirtualDocument
+                id={props.id}
+                nodeType={node.nodeType}
+                nodeName={node.nodeName}
+                nodeValue={node.nodeValue}
+                attributes={node.attributes}
+                documentURI={node.documentURI}
+            >
+                {renderChildren(node, props.nodes)}
+            </VirtualDocument>
+            {renderDebug(props)}
+        </>
     );
 }
 
@@ -49,16 +63,19 @@ function renderDoctype(
     node: StoredVirtualDoctypeProps
 ): ReactElement {
     return (
-        <VirtualDoctype
-            id={props.id}
-            nodeType={node.nodeType}
-            nodeName={node.nodeName}
-            nodeValue={node.nodeValue}
-            attributes={node.attributes}
-            publicId={node.publicId}
-            systemId={node.systemId}
-            parentId={node.parentId}
-        />
+        <>
+            <VirtualDoctype
+                id={props.id}
+                nodeType={node.nodeType}
+                nodeName={node.nodeName}
+                nodeValue={node.nodeValue}
+                attributes={node.attributes}
+                publicId={node.publicId}
+                systemId={node.systemId}
+                parentId={node.parentId}
+            />
+            {renderDebug(props)}
+        </>
     );
 }
 
@@ -67,15 +84,18 @@ function renderComment(
     node: StoredVirtualCommentProps
 ): ReactElement {
     return (
-        <VirtualComment
-            id={props.id}
-            nodeType={node.nodeType}
-            nodeName={node.nodeName}
-            nodeValue={node.nodeValue}
-            attributes={{}}
-            parentId={node.parentId}
-            prevSiblingId={node.prevSiblingId}
-        />
+        <>
+            <VirtualComment
+                id={props.id}
+                nodeType={node.nodeType}
+                nodeName={node.nodeName}
+                nodeValue={node.nodeValue}
+                attributes={{}}
+                parentId={node.parentId}
+                prevSiblingId={node.prevSiblingId}
+            />
+            {renderDebug(props)}
+        </>
     );
 }
 
@@ -84,21 +104,24 @@ function renderElement(
     node: StoredVirtualElementProps
 ): ReactElement {
     return (
-        <VirtualElement
-            id={props.id}
-            nodeType={node.nodeType}
-            nodeName={node.nodeName}
-            nodeValue={node.nodeValue}
-            attributes={node.attributes}
-        >
-            {renderChildren(node, props.nodes)}
-        </VirtualElement>
+        <>
+            <VirtualElement
+                id={props.id}
+                nodeType={node.nodeType}
+                nodeName={node.nodeName}
+                nodeValue={node.nodeValue}
+                attributes={node.attributes}
+            >
+                {renderChildren(node, props.nodes)}
+            </VirtualElement>
+            {renderDebug(props)}
+        </>
     );
 }
 
 export function ChildManager(props: Readonly<ChildManagerProps>) {
     let node = props.nodes[props.id];
-    
+
     switch (node.nodeType) {
         case Node.ELEMENT_NODE: {
             return renderElement(props, node as StoredVirtualElementProps);
@@ -122,9 +145,12 @@ export function ChildManager(props: Readonly<ChildManagerProps>) {
         case Node.NOTATION_NODE:
         default: {
             return (
-                <pre key={props.id}>
-                    {`Unsupported node type: ${node.nodeType}`}
-                </pre>
+                <>
+                    <pre key={props.id}>
+                        {`Unsupported node type: ${node.nodeType}`}
+                    </pre>
+                    {renderDebug(props)}
+                </>
             );
         }
     }

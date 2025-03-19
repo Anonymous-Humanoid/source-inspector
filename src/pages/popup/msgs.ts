@@ -26,7 +26,6 @@ export interface ReceivedMsg extends Msg {
 export interface RemoveMsg extends Msg {
     type: 'remove';
     id: string;
-    parentId?: string;
 }
 
 export type UpdateMsg =

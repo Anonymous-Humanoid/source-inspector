@@ -8,7 +8,6 @@ interface SharedValues {
     nodeName: string;
     nodeValue: null;
     attributes: {};
-    prevSiblingId?: undefined;
     publicId: string;
     systemId: string;
     children?: never[];
@@ -29,8 +28,7 @@ export function VirtualDoctype(props: Readonly<VirtualDoctypeProps>) {
         if (props.systemId === '') {
             xmlId += ` ${props.systemId}`;
         }
-    }
-    else if (props.systemId !== '') {
+    } else if (props.systemId !== '') {
         xmlId += ` SYSTEM "${props.systemId}"`;
     }
 

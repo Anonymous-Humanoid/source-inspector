@@ -65,12 +65,12 @@ type PartialMutationRecord =
     async function _releaseMsgMutex() {
         if (_mutexRelease == null) {
             console.warn('Messaging mutex already released');
-            
+
             return;
         }
-        
+
         _mutexRelease();
-        
+
         _mutexRelease = undefined;
     }
 
@@ -80,7 +80,7 @@ type PartialMutationRecord =
      */
     async function _sendMessage(msg: PopupMsg): Promise<void> {
         await _acquireMsgMutex();
-        
+
         _connection?.postMessage(msg);
     }
 
@@ -139,24 +139,17 @@ type PartialMutationRecord =
     function _removedNodesHandler(mutation: PartialNodeMutationRecord) {
         for (let node of mutation.removedNodes) {
             if (_elementMap.has(node)) {
-                if (_elementMap.has(node)) {
-                    let id = _elementMap.get(node) as string;
-                    let parentId =
-                        mutation.target == null
-                            ? undefined
-                            : _getId(mutation.target);
-                    let msg: RemoveMsg = {
-                        type: 'remove',
-                        id,
-                        parentId
-                    };
+                let id = _elementMap.get(node) as string;
+                let msg: RemoveMsg = {
+                    type: 'remove',
+                    id
+                };
 
-                    _sendMessage(msg);
-                } else {
-                    console.info('Ignoring anomalous node removal:', node);
+                _sendMessage(msg);
+            } else {
+                console.info('Ignoring anomalous node removal:', node);
 
-                    _elementMap.delete(node);
-                }
+                _elementMap.delete(node);
             }
         }
     }
@@ -168,13 +161,18 @@ type PartialMutationRecord =
             switch (node.nodeType) {
                 case Node.ELEMENT_NODE: {
                     let parentId = _getId(mutation.target!);
+                    let prevSiblingId =
+                        node.previousSibling == null
+                            ? undefined
+                            : _getId(node.previousSibling);
                     let msg: UpdateElementMsg = {
                         type: 'update',
                         id,
                         parentId,
                         nodeType: node.nodeType,
                         nodeName: node.nodeName,
-                        nodeValue: null
+                        nodeValue: null,
+                        prevSiblingId
                     };
 
                     _sendMessage(msg);
@@ -182,20 +180,28 @@ type PartialMutationRecord =
                 }
                 case Node.COMMENT_NODE: {
                     let parentId = _getId(mutation.target!);
+                    let prevSiblingId =
+                        node.previousSibling == null
+                            ? undefined
+                            : _getId(node.previousSibling);
                     let msg: UpdateCommentMsg = {
                         type: 'update',
                         id,
                         parentId,
                         nodeType: node.nodeType,
                         nodeName: node.nodeName,
-                        nodeValue: node.nodeValue!
+                        nodeValue: node.nodeValue!,
+                        prevSiblingId
                     };
 
                     _sendMessage(msg);
                     break;
                 }
                 case Node.DOCUMENT_NODE: {
-                    let parentId = mutation.target == null ? undefined : _getId(mutation.target);
+                    let parentId =
+                        mutation.target == null
+                            ? undefined
+                            : _getId(mutation.target);
                     let doc = node as Document;
                     let msg: UpdateDocumentMsg = {
                         type: 'update',
@@ -214,6 +220,10 @@ type PartialMutationRecord =
                 case Node.DOCUMENT_TYPE_NODE: {
                     let doctype = node as DocumentType;
                     let parentId = _getId(mutation.target!);
+                    let prevSiblingId =
+                        node.previousSibling == null
+                            ? undefined
+                            : _getId(node.previousSibling);
                     let msg: UpdateDoctypeMsg = {
                         type: 'update',
                         id,
@@ -223,9 +233,10 @@ type PartialMutationRecord =
                         attributes: {},
                         publicId: doctype.publicId,
                         systemId: doctype.systemId,
-                        parentId
+                        parentId,
+                        prevSiblingId
                     };
-                    
+
                     _sendMessage(msg);
                     break;
                 }

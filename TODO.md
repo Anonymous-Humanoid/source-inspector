@@ -2,43 +2,48 @@
 
 ## Functional Priorities
 
-- Extension icon is not rendering in the extension toolbar
+- Write `README.md`
+  - Installing section
+  - Changing Permissions section
+  - How it Works section
+- Add dropdown functionality to all nodes with children
+- For accessibility purposes, add the ability
+  to select and navigate between elements in the inspector
+- When elements are added, children should be processed
+- Fix adding nodes with previous node IDs, as they seem to be rendered
+  out of order when, e.g, removing a node in DevTools and undoing the action
+- Render XML attributes in an XHTML document, e.g:
+  
+  ```xhtml
+  <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+  ```
+
 - For security reasons, validate all messages to ensure no compromisation
   has occurred within any untrustworthy part of the extension
   (see: the [issue tracker](https://issuetracker.google.com/issues/311491887)
   and the referenced
   [docs](https://chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/security/compromised-renderers.md#Messaging))
-- Tell the user when it cannot inspect a protected page
-- Replace host permissions with the active tab permission to minimize
-  permissions
+- Tell the user when a protected page cannot be inspected
 - Add documentation where it's missing or necessary (e.g, @param or @returns)
-- Fix `ul` CSS
-  - Remove unnecessary whitespace
-  - Indent nested nodes
 - Support attribute mutations
   - Have attributes and text referenced through an ID in virtual nodes instead
     of storing key-value pairs and regenerating keys by a fixed pattern
-- Support character data mutations, if necessary
+- Support character data mutations
 - Finish supporting all node types
-  - Doctypes can have preceding sibling nodes (XHTML only)
   - Shadow roots can be accessed using
   [`chrome.dom.openOrClosedShadowRoot`](https://developer.chrome.com/docs/extensions/reference/api/dom?hl=en#method-openOrClosedShadowRoot)
 
 ## Technical Priorities
 
 - Centralize all TODOs in this file
-- Write `README.md`
-  - Installing section
-  - Changing Permissions section
-  - How it Works section
 - Move top-level configuration files to their own folder
 - Migrate ChildManager to a
   [reducer](https://react.dev/learn/extracting-state-logic-into-a-reducer)
   for increased maintainability
 - Only send ACKs from the StateManager when necessary
 - ChildManager prop drills `nodes`:
-  use a shared context to manage deep node state
-- Format VS Code editor on save
+  use a shared context and provider (in ChildManager) to manage deep node state
+- Format VS Code editor on save with Prettier
 - Ensure ESLint config file path is correctly recognized and interpreted
 - Add a light mode:
   
@@ -52,8 +57,6 @@
 ## Future Priorities
 
 - Create and add donation medium
-- Migrate CommonJS config files to TypeScript by modifying the Nodemon configs
-  and/or the package.json scripts
 - Use TypeScript namespaces for code separation
 - Modify ESLint config:
   - Currently using deprecated rules, see:

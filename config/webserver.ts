@@ -1,12 +1,10 @@
-// CommonJS module: Cannot use import here
-const WebpackDevServer = require('webpack-dev-server');
-const webpack = require('webpack');
-const { resolve } = require('path');
+import { resolve } from 'path';
+import webpack from 'webpack';
+import WebpackDevServer from 'webpack-dev-server';
+import config from './webpack.config';
 
-/** @type {webpack.Configuration} */
-const config = require('./webpack.config.cjs');
 const compiler = webpack(config);
-const OUTPUT_DIR = /** @type {string} */ (process.env.OUTPUT_DIR);
+const OUTPUT_DIR = process.env.OUTPUT_DIR!;
 
 // Enabling server-side (and disabling client-side) hot reloading
 let server = new WebpackDevServer(
