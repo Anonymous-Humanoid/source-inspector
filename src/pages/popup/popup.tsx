@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { ChildManager, NodeState } from './childManager';
-import { StoredVirtualDoctypeProps, StoredVirtualDocumentProps, StoredVirtualElementProps } from './components';
+import {
+    StoredVirtualDoctypeProps,
+    StoredVirtualDocumentProps,
+    StoredVirtualElementProps
+} from './components';
 import {
     ConnectMsg,
     PopupMsg,
@@ -9,6 +13,8 @@ import {
     UpdateMsg
 } from './msgs';
 import { StoredVirtualCommentProps } from './components/comment';
+import { sleep } from '../shared';
+import { StoredVirtualNodeProps, VirtualNodeProps } from './base';
 
 // TODO Add showChildren method and dropdowns to VirtualElementType
 // TODO VirtualNodeType UI indentation
@@ -30,8 +36,7 @@ function insertAfterSibling(
     for (let siblingId of childNodeIds) {
         if (prevSiblingFound) {
             nextSiblingIds.push(siblingId);
-        } 
-        else {
+        } else {
             prevSiblingIds.push(siblingId);
 
             if (siblingId === prevSiblingId) {
@@ -58,24 +63,26 @@ export default function StateManager() {
     const [tabId, setTabId] = useState<number | undefined>();
     const [root, setRoot] = useState<string | undefined>();
     const [nodes, setNodes] = useState<NodeState>({});
+    const [queue, setQueue] = useState<PopupMsg[]>([]);
     let [connection, setConnection] = useState<
         chrome.runtime.Port | undefined
     >();
-    
+
     if (firstRun && root == null) {
         // Notifying background page we're ready to connect
         setFirstRun(false);
         chrome.runtime.onMessage.addListener(generateDocument);
         chrome.runtime.sendMessage({});
         console.log('Popup ready to connect!');
+    } else if (queue.length > 0) {
+        // Sending queued messages
+        // Relies on state 'nodes', so only one message is processed per render
+        const msg = queue.shift()!;
+
+        handleMessage(msg);
+        setQueue((queue) => queue.slice(1));
     }
-    else if (root != null) {
-        // Notifying content script we've received the last message
-        let ack: ReceivedMsg = { type: 'received' };
-        
-        connection!.postMessage(ack);
-    }
-    
+
     // Configuring connection effect
     // NOTE: Due to the cleanup function, this effect shouldn't
     // work correctly in development with React strict mode enabled.
@@ -89,10 +96,10 @@ export default function StateManager() {
             setConnection(newConnection);
 
             newConnection.onDisconnect.addListener(onDisconnect);
-            newConnection.onMessage.addListener(updateDocument);
+            newConnection.onMessage.addListener(queueMessage);
 
             connection = newConnection;
-            
+
             console.log(`Successfully connected to tab ${tabId}!`);
         }
 
@@ -100,6 +107,100 @@ export default function StateManager() {
             newConnection?.disconnect();
         };
     }, [tabId]);
+
+    /**
+     * Inserts the given virtual node into the virtual DOM tree.
+     * @param state The virtual node to insert
+     * @param id The virtual node id
+     * @param parentId The parent virtual node id
+     * @param prevSiblingId The previous sibling virtual node id
+     */
+    function insertNode(
+        state: StoredVirtualNodeProps,
+        id: string,
+        parentId: string | null = null,
+        prevSiblingId: string | undefined = undefined
+    ): void {
+        // Handling root node
+        if (parentId == null) {
+            if (root != null) {
+                let rootMsg = [`Anomalous root node update on id:`, id];
+                let siblingMsg =
+                    prevSiblingId == null
+                        ? []
+                        : ['\nUnexpected prevSiblingId:', prevSiblingId];
+
+                console.error(...rootMsg, ...siblingMsg);
+                return;
+            }
+
+            setRoot(id);
+            setNodes((prevNodes) => {
+                return {
+                    ...prevNodes,
+                    [id]: state
+                };
+            });
+            return;
+        }
+
+        // Handling child node, possibly with siblings
+        // If the node already exists, it's moved to its new location
+        setNodes((prevNodes) => {
+            return {
+                ...prevNodes,
+                [parentId]: {
+                    ...prevNodes[parentId],
+                    childNodeIds: insertAfterSibling(
+                        prevNodes[parentId].childNodeIds.filter(
+                            (childId) => childId != id
+                        ),
+                        prevSiblingId,
+                        id
+                    )
+                },
+                [id]: state
+            };
+        });
+    }
+
+    /**
+     * Removes the given virtual node and all
+     * of its children from the virtual DOM tree
+     * @param id The virtual node id to remove
+     */
+    function removeNode(id: string): void {
+        if (id == null || !(id in nodes)) {
+            console.error(`Anomalous node removal:`, id);
+            return;
+        }
+
+        setNodes((prevNodes) => {
+            let nextNodes = { ...prevNodes };
+            let node = nextNodes[id];
+            let parentId = node.parentId;
+            let childNodeIds = [...node.childNodeIds];
+            let currentId: string | undefined;
+
+            // Removing references to node
+            if (parentId != null) {
+                nextNodes[parentId].childNodeIds = nextNodes[
+                    parentId
+                ].childNodeIds.filter((childId) => childId != id);
+            }
+
+            // Iteratively removing references to node children
+            while ((currentId = childNodeIds.pop()) != null) {
+                let currentNode = nextNodes[currentId];
+
+                childNodeIds.push(...currentNode.childNodeIds);
+
+                delete nextNodes[currentId];
+            }
+
+            return nextNodes;
+        });
+    }
 
     function updateNodeHandler(msg: UpdateMsg): void {
         switch (msg.nodeType) {
@@ -120,20 +221,7 @@ export default function StateManager() {
                     parentId
                 };
 
-                setNodes((prevNodes) => {
-                    return {
-                        ...prevNodes,
-                        [parentId]: {
-                            ...prevNodes[parentId],
-                            childNodeIds: insertAfterSibling(
-                                prevNodes[parentId].childNodeIds,
-                                msg.prevSiblingId,
-                                msg.id
-                            )
-                        },
-                        [msg.id]: state
-                    };
-                });
+                insertNode(state, msg.id, parentId, msg.prevSiblingId);
                 break;
             }
             case Node.COMMENT_NODE: {
@@ -153,68 +241,22 @@ export default function StateManager() {
                     parentId
                 };
 
-                setNodes((prevNodes) => {
-                    return {
-                        ...prevNodes,
-                        [parentId]: {
-                            ...prevNodes[parentId],
-                            childNodeIds: insertAfterSibling(
-                                prevNodes[parentId].childNodeIds,
-                                msg.prevSiblingId,
-                                msg.id
-                            )
-                        },
-                        [msg.id]: state
-                    };
-                });
+                insertNode(state, msg.id, parentId, msg.prevSiblingId);
                 break;
             }
             case Node.DOCUMENT_NODE: {
+                let parentId = msg.parentId;
                 let state: StoredVirtualDocumentProps = {
                     nodeType: msg.nodeType,
                     nodeName: msg.nodeName,
                     nodeValue: msg.nodeValue,
                     attributes: {},
                     childNodeIds: [],
+                    parentId,
                     documentURI: msg.documentURI
                 };
 
-                if (root == null) {
-                    setRoot(msg.id);
-                    setNodes((prevNodes) => {
-                        return {
-                            ...prevNodes,
-                            [msg.id]: state
-                        };
-                    });
-                } else {
-                    let parentId = msg.parentId!;
-                    let state: StoredVirtualDocumentProps = {
-                        nodeType: msg.nodeType,
-                        nodeName: msg.nodeName,
-                        nodeValue: msg.nodeValue,
-                        attributes: {},
-                        childNodeIds: [],
-                        parentId,
-                        documentURI: msg.documentURI
-                    };
-
-                    setNodes((prevNodes) => {
-                        return {
-                            ...prevNodes,
-                            [parentId]: {
-                                ...prevNodes[parentId],
-                                childNodeIds: insertAfterSibling(
-                                    prevNodes[parentId].childNodeIds,
-                                    msg.prevSiblingId,
-                                    msg.id
-                                )
-                            },
-                            [msg.id]: state
-                        };
-                    });
-                }
-
+                insertNode(state, msg.id, parentId, msg.prevSiblingId);
                 break;
             }
             case Node.DOCUMENT_TYPE_NODE: {
@@ -224,7 +266,7 @@ export default function StateManager() {
                     console.error(`Anomalous node parent update:`, msg);
                     return;
                 }
-                
+
                 let state: StoredVirtualDoctypeProps = {
                     nodeType: msg.nodeType,
                     nodeName: msg.nodeName,
@@ -235,21 +277,8 @@ export default function StateManager() {
                     childNodeIds: [],
                     parentId
                 };
-                
-                setNodes((prevNodes) => {
-                    return {
-                        ...prevNodes,
-                        [parentId]: {
-                            ...prevNodes[parentId],
-                            childNodeIds: insertAfterSibling(
-                                prevNodes[parentId].childNodeIds,
-                                msg.prevSiblingId,
-                                msg.id
-                            )
-                        },
-                        [msg.id]: state
-                    };
-                });
+
+                insertNode(state, msg.id, parentId, msg.prevSiblingId);
                 break;
             }
             case Node.TEXT_NODE:
@@ -270,34 +299,43 @@ export default function StateManager() {
         }
     }
 
-    function removeNodeHandler(msg: RemoveMsg): void {
-        // TODO Remove nodes (Ensure no memory leaks on node removal)
-        console.error('Node removal currently unsupported:', msg);
-    }
+    /**
+     * Places the given message into a queue for processing
+     * @param msg
+     */
+    function queueMessage(msg: PopupMsg): void {
+        setQueue((queue) => [...queue, msg]);
 
-    function updateDocument(msg: PopupMsg): void {
-        switch (msg.type) {
-            case 'update': {
-                updateNodeHandler(msg);
-                break;
-            }
-            case 'remove': {
-                removeNodeHandler(msg);
-                break;
-            }
-            default: {
-                console.error('Invalid message received:', msg);
-                return;
-            }
-        }
-
+        // Notifying content script we've received the last message
         let ack: ReceivedMsg = { type: 'received' };
 
         connection?.postMessage(ack);
     }
 
     /**
-     * If valid, initializes a connection between this popup and the inspected tab
+     * Processes the given message, resulting in a
+     * virtual DOM tree modification if successful
+     * @param msg
+     */
+    function handleMessage(msg: PopupMsg): void {
+        switch (msg.type) {
+            case 'update': {
+                updateNodeHandler(msg);
+                break;
+            }
+            case 'remove': {
+                removeNode(msg.id);
+                break;
+            }
+            default: {
+                console.error('Invalid message received:', msg);
+            }
+        }
+    }
+
+    /**
+     * If valid, initializes a connection between
+     * this popup and the inspected tab
      * @param msg The connection message
      * @param sender The message sender
      */

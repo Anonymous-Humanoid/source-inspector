@@ -1,14 +1,7 @@
 {
     "exec": "npx ts-node config/webserver.ts",
     "verbose": true,
-    "ignore": [
-        "/dist",
-        "/build",
-        "/coverage",
-        "/.vscode",
-        "/.git",
-        "/config"
-    ],
+    "ignore": ["/dist", "/build", "/coverage", "/.vscode", "/.git", "/config"],
     "watch": [
         "./config/webserver.ts",
         "./config/webpack.config.ts",

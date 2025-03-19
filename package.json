@@ -12,7 +12,7 @@
         "start": "npm run start:dev",
         "start:dev": "nodemon --config config/nodemon.development.json",
         "start:prod": "nodemon --config config/nodemon.production.json",
-        "prettier": "prettier --write **/*.{cjs,mjs,js,jsx,ts,tsx,json,css,scss,html}",
+        "prettier": "prettier --write **/*.{cjs,mjs,js,jsx,ts,tsx,json,css,scss,html} --config config/.prettierrc --ignore-path config/.prettierignore",
         "test": "echo \"Error: no test specified\" && exit 1"
     },
     "dependencies": {
@@ -45,7 +45,7 @@
         "eslint-plugin-jsx-a11y": "^6.7.1",
         "eslint-plugin-react": "^7.32.0",
         "eslint-plugin-react-hooks": "^4.6.0",
-        "file-loader": "^6.2.0",
+        "generate-json-webpack-plugin": "^2.0.0",
         "html-loader": "^4.2.0",
         "html-webpack-plugin": "^5.5.0",
         "nodemon": "^3.1.9",
