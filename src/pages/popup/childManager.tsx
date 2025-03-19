@@ -23,7 +23,7 @@ interface ChildManagerProps {
 function renderDebug(props: Readonly<ChildManagerProps>): ReactNode {
     return (
         process.env.NODE_ENV !== 'production' && (
-            <p className='debug'>{props.id}</p>
+            <p className='node debug'>{props.id}</p>
         )
     );
 }
