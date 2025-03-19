@@ -43,6 +43,7 @@ function renderDocument(
 ): ReactElement {
     return (
         <>
+            {renderDebug(props)}
             <VirtualDocument
                 id={props.id}
                 nodeType={node.nodeType}
@@ -53,7 +54,6 @@ function renderDocument(
             >
                 {renderChildren(node, props.nodes)}
             </VirtualDocument>
-            {renderDebug(props)}
         </>
     );
 }
@@ -64,6 +64,7 @@ function renderDoctype(
 ): ReactElement {
     return (
         <>
+            {renderDebug(props)}
             <VirtualDoctype
                 id={props.id}
                 nodeType={node.nodeType}
@@ -74,7 +75,6 @@ function renderDoctype(
                 systemId={node.systemId}
                 parentId={node.parentId}
             />
-            {renderDebug(props)}
         </>
     );
 }
@@ -85,6 +85,7 @@ function renderComment(
 ): ReactElement {
     return (
         <>
+            {renderDebug(props)}
             <VirtualComment
                 id={props.id}
                 nodeType={node.nodeType}
@@ -94,7 +95,6 @@ function renderComment(
                 parentId={node.parentId}
                 prevSiblingId={node.prevSiblingId}
             />
-            {renderDebug(props)}
         </>
     );
 }
@@ -105,6 +105,7 @@ function renderElement(
 ): ReactElement {
     return (
         <>
+            {renderDebug(props)}
             <VirtualElement
                 id={props.id}
                 nodeType={node.nodeType}
@@ -114,7 +115,6 @@ function renderElement(
             >
                 {renderChildren(node, props.nodes)}
             </VirtualElement>
-            {renderDebug(props)}
         </>
     );
 }
@@ -146,10 +146,10 @@ export function ChildManager(props: Readonly<ChildManagerProps>) {
         default: {
             return (
                 <>
+                    {renderDebug(props)}
                     <pre key={props.id}>
                         {`Unsupported node type: ${node.nodeType}`}
                     </pre>
-                    {renderDebug(props)}
                 </>
             );
         }
