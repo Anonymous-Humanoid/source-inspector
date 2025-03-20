@@ -30,12 +30,12 @@
     of storing key-value pairs and regenerating keys by a fixed pattern
 - Support character data mutations
 - Finish supporting all node types
+  - Test nested document nodes
   - Shadow roots can be accessed using
   [`chrome.dom.openOrClosedShadowRoot`](https://developer.chrome.com/docs/extensions/reference/api/dom?hl=en#method-openOrClosedShadowRoot)
 
 ## Technical Priorities
 
-- Centralize all TODOs in this file
 - Move top-level configuration files to their own folder
 - Migrate ChildManager to a
   [reducer](https://react.dev/learn/extracting-state-logic-into-a-reducer)
@@ -56,6 +56,8 @@
 
 ## Future Priorities
 
+- Replace shared assert function with node:assert.assert
+- Remove redundant information from messages and props
 - Create and add donation medium
 - Use TypeScript namespaces for code separation
 - Modify ESLint config:

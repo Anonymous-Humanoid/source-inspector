@@ -8,7 +8,7 @@ interface SharedValues {
     nodeName: '#comment';
     nodeValue: string;
     attributes: {};
-    prevSiblingId?: undefined;
+    prevSiblingId?: string;
     children?: never[];
 }
 

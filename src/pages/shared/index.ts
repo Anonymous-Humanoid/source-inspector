@@ -16,7 +16,6 @@ export class AssertionError extends Error {
     }
 }
 
-// TODO Replace assert with node:assert.assert
 /**
  * Throws an {@link AssertionError} if the given expression is falsey
  * @param expr

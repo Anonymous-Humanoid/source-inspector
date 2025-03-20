@@ -125,14 +125,12 @@ type PartialMutationRecord =
     ) {
         let id = _getId(mutation.target);
 
-        // TODO TESTING
         console.error(`Character data mutation on node ${id}:`, mutation);
     }
 
     function _attributesHandler(mutation: PartialAttributeMutationRecord) {
         let id = _getId(mutation.target);
 
-        // TODO TESTING
         console.error(`Attribute mutation on node ${id}:`, mutation);
     }
 
@@ -148,9 +146,9 @@ type PartialMutationRecord =
                 _sendMessage(msg);
             } else {
                 console.info('Ignoring anomalous node removal:', node);
-
-                _elementMap.delete(node);
             }
+
+            _elementMap.delete(node);
         }
     }
 
@@ -189,8 +187,9 @@ type PartialMutationRecord =
                         id,
                         parentId,
                         nodeType: node.nodeType,
-                        nodeName: node.nodeName,
+                        nodeName: '#comment',
                         nodeValue: node.nodeValue!,
+                        attributes: {},
                         prevSiblingId
                     };
 
@@ -211,7 +210,7 @@ type PartialMutationRecord =
                         nodeValue: null,
                         attributes: {},
                         documentURI: doc.documentURI,
-                        parentId // TODO Test document parentId
+                        parentId
                     };
 
                     _sendMessage(msg);
@@ -370,14 +369,13 @@ type PartialMutationRecord =
         // Observing DOM for changes
         _observer = new MutationObserver(_mutationsHandler);
 
-        // TODO Revisit if these attributes are still needed after completion
         _observer.observe(document, {
             childList: true,
             subtree: true,
             attributes: true,
             characterData: true,
-            attributeOldValue: true,
-            characterDataOldValue: true
+            // attributeOldValue: true,
+            // characterDataOldValue: true
         });
 
         // Pushing initial DOM and blocking mutations, then pushing any mutations

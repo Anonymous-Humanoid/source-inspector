@@ -1,24 +1,18 @@
 import React, { useEffect, useState } from 'react';
+import { StoredVirtualNodeProps } from './base';
 import { ChildManager, NodeState } from './childManager';
 import {
     StoredVirtualDoctypeProps,
     StoredVirtualDocumentProps,
     StoredVirtualElementProps
 } from './components';
+import { StoredVirtualCommentProps } from './components/comment';
 import {
     ConnectMsg,
     PopupMsg,
     ReceivedMsg,
-    RemoveMsg,
     UpdateMsg
 } from './msgs';
-import { StoredVirtualCommentProps } from './components/comment';
-import { sleep } from '../shared';
-import { StoredVirtualNodeProps, VirtualNodeProps } from './base';
-
-// TODO Add showChildren method and dropdowns to VirtualElementType
-// TODO VirtualNodeType UI indentation
-// TODO Documentation
 
 function insertAfterSibling(
     childNodeIds: string[],
