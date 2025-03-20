@@ -4,6 +4,7 @@ import {
     PopupMsg,
     ReceivedMsg,
     RemoveMsg,
+    UpdateCdataSectionMsg,
     UpdateCommentMsg,
     UpdateDoctypeMsg,
     UpdateDocumentMsg,
@@ -170,6 +171,27 @@ type PartialMutationRecord =
                         nodeType: node.nodeType,
                         nodeName: node.nodeName,
                         nodeValue: null,
+                        attributes: {},
+                        prevSiblingId
+                    };
+
+                    _sendMessage(msg);
+                    break;
+                }
+                case Node.CDATA_SECTION_NODE: {
+                    let parentId = _getId(mutation.target!);
+                    let prevSiblingId =
+                        node.previousSibling == null
+                            ? undefined
+                            : _getId(node.previousSibling);
+                    let msg: UpdateCdataSectionMsg = {
+                        type: 'update',
+                        id,
+                        parentId,
+                        nodeType: node.nodeType,
+                        nodeName: '#cdata-section',
+                        nodeValue: node.nodeValue!,
+                        attributes: {},
                         prevSiblingId
                     };
 
@@ -241,7 +263,6 @@ type PartialMutationRecord =
                 }
                 case Node.ATTRIBUTE_NODE:
                 case Node.TEXT_NODE:
-                case Node.CDATA_SECTION_NODE:
                 case Node.ENTITY_REFERENCE_NODE:
                 case Node.ENTITY_NODE:
                 case Node.PROCESSING_INSTRUCTION_NODE:

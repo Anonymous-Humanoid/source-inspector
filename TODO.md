@@ -3,8 +3,6 @@
 ## Functional Priorities
 
 - Write `README.md`
-  - Installing section
-  - Changing Permissions section
   - How it Works section
 - Add dropdown functionality to all nodes with children
 - For accessibility purposes, add the ability

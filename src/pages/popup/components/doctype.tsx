@@ -22,7 +22,7 @@ export type VirtualDoctypeProps = NonStoredProps<StoredVirtualDoctypeProps>;
 export function VirtualDoctype(props: Readonly<VirtualDoctypeProps>) {
     let xmlId = '';
 
-    if (props.publicId === '') {
+    if (props.publicId !== '') {
         xmlId += ` PUBLIC "${props.publicId}"`;
 
         if (props.systemId === '') {

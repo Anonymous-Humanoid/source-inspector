@@ -1,15 +1,17 @@
 import {
+    UpdateCdataSectionMsg,
+    UpdateCommentMsg,
     UpdateDoctypeMsg,
     UpdateDocumentMsg,
-    UpdateElementMsg,
-    UpdateCommentMsg
+    UpdateElementMsg
 } from './components';
 
 export {
+    UpdateCdataSectionMsg,
+    UpdateCommentMsg,
     UpdateDoctypeMsg,
     UpdateDocumentMsg,
-    UpdateElementMsg,
-    UpdateCommentMsg
+    UpdateElementMsg
 };
 
 export type AnyMsg = PopupMsg | ReceivedMsg;
@@ -38,7 +40,7 @@ export type UpdateMsg =
     | UpdateElementMsg
     | UpdateAttributeNodeMsg
     | UpdateTextNodeMsg
-    | UpdateCdataMsg
+    | UpdateCdataSectionMsg
     | UpdateEntityRefMsg
     | UpdateEntityMsg
     | UpdateInstructionMsg
@@ -51,10 +53,10 @@ export type UpdateMsg =
 export interface BaseUpdateMsg extends Msg {
     type: 'update';
     id: string;
-    parentId: string | undefined;
     nodeType: number;
     nodeName: string;
     nodeValue: string | null;
+    parentId?: string | undefined;
     prevSiblingId?: string;
 }
 
@@ -65,10 +67,6 @@ export interface UpdateAttributeNodeMsg extends BaseUpdateMsg {
 export interface UpdateTextNodeMsg extends BaseUpdateMsg {
     nodeType: Node['TEXT_NODE'];
     nodeValue: string;
-}
-
-export interface UpdateCdataMsg extends BaseUpdateMsg {
-    nodeType: Node['CDATA_SECTION_NODE'];
 }
 
 export interface UpdateEntityRefMsg extends BaseUpdateMsg {

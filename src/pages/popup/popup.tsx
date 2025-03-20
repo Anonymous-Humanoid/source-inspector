@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { StoredVirtualNodeProps } from './base';
 import { ChildManager, NodeState } from './childManager';
 import {
+    StoredVirtualCdataSectionProps,
     StoredVirtualDoctypeProps,
     StoredVirtualDocumentProps,
     StoredVirtualElementProps
@@ -198,61 +199,18 @@ export default function StateManager() {
 
     function updateNodeHandler(msg: UpdateMsg): void {
         switch (msg.nodeType) {
-            case Node.ELEMENT_NODE: {
-                let parentId = msg.parentId;
-
-                if (parentId == null || !(parentId in nodes)) {
-                    console.error(`Anomalous node parent update:`, msg);
-                    return;
-                }
-
-                let state: StoredVirtualElementProps = {
-                    nodeType: msg.nodeType,
-                    nodeName: msg.nodeName,
-                    nodeValue: msg.nodeValue,
-                    attributes: {},
-                    childNodeIds: [],
-                    parentId
-                };
-
-                insertNode(state, msg.id, parentId, msg.prevSiblingId);
-                break;
-            }
-            case Node.COMMENT_NODE: {
-                let parentId = msg.parentId;
-
-                if (parentId == null || !(parentId in nodes)) {
-                    console.error(`Anomalous node parent update:`, msg);
-                    return;
-                }
-
-                let state: StoredVirtualCommentProps = {
-                    nodeType: msg.nodeType,
-                    nodeName: '#comment',
-                    nodeValue: msg.nodeValue,
-                    attributes: {},
-                    childNodeIds: [],
-                    parentId
-                };
-
-                insertNode(state, msg.id, parentId, msg.prevSiblingId);
-                break;
-            }
             case Node.DOCUMENT_NODE: {
-                let parentId = msg.parentId;
                 let state: StoredVirtualDocumentProps = {
-                    nodeType: msg.nodeType,
-                    nodeName: msg.nodeName,
-                    nodeValue: msg.nodeValue,
-                    attributes: {},
-                    childNodeIds: [],
-                    parentId,
-                    documentURI: msg.documentURI
+                    ...msg,
+                    childNodeIds: []
                 };
 
-                insertNode(state, msg.id, parentId, msg.prevSiblingId);
+                insertNode(state, msg.id, msg.parentId, msg.prevSiblingId);
                 break;
             }
+            case Node.ELEMENT_NODE:
+            case Node.CDATA_SECTION_NODE:
+            case Node.COMMENT_NODE:
             case Node.DOCUMENT_TYPE_NODE: {
                 let parentId = msg.parentId;
 
@@ -261,15 +219,9 @@ export default function StateManager() {
                     return;
                 }
 
-                let state: StoredVirtualDoctypeProps = {
-                    nodeType: msg.nodeType,
-                    nodeName: msg.nodeName,
-                    nodeValue: msg.nodeValue,
-                    publicId: msg.publicId,
-                    systemId: msg.systemId,
-                    attributes: {},
-                    childNodeIds: [],
-                    parentId
+                let state: StoredVirtualElementProps | StoredVirtualCdataSectionProps | StoredVirtualCommentProps | StoredVirtualDoctypeProps = {
+                    ...msg,
+                    childNodeIds: []
                 };
 
                 insertNode(state, msg.id, parentId, msg.prevSiblingId);
@@ -277,7 +229,6 @@ export default function StateManager() {
             }
             case Node.TEXT_NODE:
             case Node.ATTRIBUTE_NODE:
-            case Node.CDATA_SECTION_NODE:
             case Node.ENTITY_REFERENCE_NODE:
             case Node.ENTITY_NODE:
             case Node.PROCESSING_INSTRUCTION_NODE:
