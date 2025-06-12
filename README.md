@@ -23,10 +23,11 @@ rendered in HTML or XHTML.
 
 This extension does not record any data. In the future, we plan to possibly add
 an options menu. This will be the extent of data collected, (i.e, yes/no), and
-it will not be sent or broadcast anywhere. We also do not colect browser
+it will not be sent or broadcast anywhere. We also do not collect browser
 history. We will **never** share any data with anyone, not even ourselves.
 We believe that open source comprises source transparency and user privacy.
-Your data is yours and yours alone, and we plan to keep it that way.
+Your data is yours and yours alone, and we plan to keep it that way. Plus,
+this is an extension intended for offline use.
 
 For more technical readers with a knowledge of browser extensions, the manifest
 file shows the following:
@@ -49,28 +50,31 @@ There are also some additional security features we have implemented:
   This prevents detection while still allowing access to the DOM.
 - Instead of EC6 classes, we use nested functions to create truly
   private methods in our content script. I.e:
-  
+
   ```ts
   (async () => {
-      function _privateMethod() {
-          // Super secret internals
-      }
+    function _privateMethod() {
+      // Super secret internals
+    }
 
-      function publicMethod() {
-          // Public API
-      }
+    function publicMethod() {
+      // Public API
+    }
 
-      return {
-          publicMethod,
-      };
+    return {
+      publicMethod
+    };
   })();
   ```
-<!--
+
+  <!--
+
+
 - All messages are validated to ensure that no part of the extension has been
   [compromised](https://chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/security/compromised-renderers.md#Messaging).
--->
+  -->
 
-Finally, for transparency's sake, yes, the initial commit added *a lot*. That's
+Finally, for transparency's sake, yes, the initial commit added _a lot_. That's
 because this project had been in the works for a while. This was a rich
 opportunity to learn about React and more technical (X)HTML.
 And in learning about React through this project, there were a few migrations
@@ -201,7 +205,7 @@ For a list of known issues and planned features, see the [TODOs](TODO.md)
 
 - My own [extension boilerplate](https://github.com/Anonymous-Humanoid/chromium-extension-boilerplate)
 - [Code review icons](https://www.flaticon.com/free-icons/code-review) created
-by Freepik - Flaticon
+  by Freepik - Flaticon
 
 [license-image]: https://img.shields.io/npm/l/markdownlint.svg
 [license-url]: https://opensource.org/licenses/MIT

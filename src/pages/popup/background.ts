@@ -101,10 +101,10 @@ class Popup {
         chrome.runtime.onMessage.addListener(MSG_BROKER);
 
         // Opening popup (requires extension split to run in incognito)
-        let popup = await chrome.tabs.create({
+        let popup = await chrome.windows.create({
             url: chrome.runtime.getURL('popup/index.html')
         });
-        const POPUP_ID = popup.id!;
+        const POPUP_ID = popup.tabs![0].id!;
 
         // Ensuring garbage collection after fixed timeout
         const TIMEOUT = setTimeout(() => {
