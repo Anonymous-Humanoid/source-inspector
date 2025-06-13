@@ -8,12 +8,40 @@ import {
     StoredVirtualElementProps
 } from './components';
 import { StoredVirtualCommentProps } from './components/comment';
-import {
-    ConnectMsg,
-    PopupMsg,
-    ReceivedMsg,
-    UpdateMsg
-} from './msgs';
+import { ConnectMsg, PopupMsg, UpdateMsg } from './msgs';
+
+function binarySearch<T>(
+    arr: T[],
+    e: T,
+    comparator: (eArr: T, e: T) => number
+): number {
+    // https://stackoverflow.com/a/29018745
+    let m = 0;
+    let n = arr.length - 1;
+
+    while (m <= n) {
+        let k = (n + m) >> 1;
+        let cmp = comparator(arr[k], e);
+
+        if (cmp > 0) {
+            m = k + 1;
+        } else if (cmp < 0) {
+            n = k - 1;
+        } else {
+            return k;
+        }
+    }
+
+    return m;
+}
+
+function insertMsg(queue: PopupMsg[], msg: PopupMsg): PopupMsg[] {
+    return queue.toSpliced(
+        binarySearch(queue, msg, (a, b) => b.asyncIndex - a.asyncIndex),
+        0,
+        msg
+    );
+}
 
 function insertAfterSibling(
     childNodeIds: string[],
@@ -48,8 +76,8 @@ function insertAfterSibling(
  * Will do nothing if the connected document can't
  * establish or severs the connection. Due to the
  * connection effect, this component is not expected
- * to work properly in development with strict mode
- * enabled.
+ * to work properly in development with React's strict
+ * mode enabled.
  *
  * @returns The document source inspection UI component
  */
@@ -59,23 +87,22 @@ export default function StateManager() {
     const [root, setRoot] = useState<string | undefined>();
     const [nodes, setNodes] = useState<NodeState>({});
     const [queue, setQueue] = useState<PopupMsg[]>([]);
-    let [connection, setConnection] = useState<
-        chrome.runtime.Port | undefined
-    >();
+    const [queueIndex, setQueueIndex] = useState<number>(0);
 
     if (firstRun && root == null) {
         // Notifying background page we're ready to connect
         setFirstRun(false);
         chrome.runtime.onMessage.addListener(generateDocument);
-        chrome.runtime.sendMessage({});
+        chrome.runtime.sendMessage({} as any);
         console.log('Popup ready to connect!');
-    } else if (queue.length > 0) {
+    } else if (queue[0]?.asyncIndex === queueIndex) {
         // Sending queued messages
         // Relies on state 'nodes', so only one message is processed per render
-        const msg = queue.shift()!;
+        const msg = queue[0];
 
-        handleMessage(msg);
+        processMessage(msg);
         setQueue((queue) => queue.slice(1));
+        setQueueIndex((i) => i + 1);
     }
 
     // Configuring connection effect
@@ -88,12 +115,8 @@ export default function StateManager() {
         if (tabId != null) {
             newConnection = chrome.tabs.connect(tabId);
 
-            setConnection(newConnection);
-
             newConnection.onDisconnect.addListener(onDisconnect);
             newConnection.onMessage.addListener(queueMessage);
-
-            connection = newConnection;
 
             console.log(`Successfully connected to tab ${tabId}!`);
         }
@@ -219,7 +242,11 @@ export default function StateManager() {
                     return;
                 }
 
-                let state: StoredVirtualElementProps | StoredVirtualCdataSectionProps | StoredVirtualCommentProps | StoredVirtualDoctypeProps = {
+                let state:
+                    | StoredVirtualElementProps
+                    | StoredVirtualCdataSectionProps
+                    | StoredVirtualCommentProps
+                    | StoredVirtualDoctypeProps = {
                     ...msg,
                     childNodeIds: []
                 };
@@ -249,12 +276,7 @@ export default function StateManager() {
      * @param msg
      */
     function queueMessage(msg: PopupMsg): void {
-        setQueue((queue) => [...queue, msg]);
-
-        // Notifying content script we've received the last message
-        let ack: ReceivedMsg = { type: 'received' };
-
-        connection?.postMessage(ack);
+        setQueue((queue) => insertMsg(queue, msg));
     }
 
     /**
@@ -262,8 +284,8 @@ export default function StateManager() {
      * virtual DOM tree modification if successful
      * @param msg
      */
-    function handleMessage(msg: PopupMsg): void {
-        switch (msg.type) {
+    function processMessage(msg: PopupMsg): void {
+        switch (msg?.type) {
             case 'update': {
                 updateNodeHandler(msg);
                 break;
@@ -300,8 +322,6 @@ export default function StateManager() {
     }
 
     function onDisconnect(): void {
-        setConnection(undefined);
-
         console.log('Disconnected from tab!');
     }
 

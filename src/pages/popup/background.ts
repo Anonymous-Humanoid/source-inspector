@@ -1,9 +1,10 @@
 import { testInjectionUri } from '../shared/background';
 import { ConnectMsg } from './msgs';
 
-class Popup {
-    static readonly #TIMEOUT_MS = 5_000;
+// Shared exports
+export const TIMEOUT_MS = 5_000;
 
+class Popup {
     #popupId: number | undefined;
     #tabId: number | undefined;
 
@@ -51,9 +52,9 @@ class Popup {
             chrome.runtime.onMessage.removeListener(MSG_BROKER);
 
             console.error(
-                `Tab ${tabId} failed to connect within ${Popup.#TIMEOUT_MS}ms`
+                `Tab ${tabId} failed to connect within ${TIMEOUT_MS}ms`
             );
-        }, Popup.#TIMEOUT_MS);
+        }, TIMEOUT_MS);
 
         chrome.runtime.onMessage.addListener(MSG_BROKER);
 
@@ -80,7 +81,7 @@ class Popup {
 
         // Waiting for popup to initialize
         async function MSG_BROKER(
-            msg: {},
+            _msg: any,
             sender: chrome.runtime.MessageSender
         ): Promise<void> {
             if (
@@ -111,11 +112,9 @@ class Popup {
             chrome.runtime.onMessage.removeListener(MSG_BROKER);
 
             console.error(
-                `Popup ${POPUP_ID} failed to connect within ${
-                    Popup.#TIMEOUT_MS
-                }ms`
+                `Popup ${POPUP_ID} failed to connect within ${TIMEOUT_MS}ms`
             );
-        }, Popup.#TIMEOUT_MS);
+        }, TIMEOUT_MS);
     }
 
     /**

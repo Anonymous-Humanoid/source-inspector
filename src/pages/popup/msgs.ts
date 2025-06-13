@@ -14,26 +14,22 @@ export {
     UpdateElementMsg
 };
 
-export type AnyMsg = PopupMsg | ReceivedMsg;
-
-export type PopupMsg = ConnectMsg | RemoveMsg | UpdateMsg;
+export type PopupMsg = RemoveMsg | UpdateMsg;
 
 interface Msg {
     type: string;
+    asyncIndex: number;
 }
 
-export interface ConnectMsg extends Msg {
+export interface ConnectMsg extends Omit<Msg, 'asyncIndex'> {
     type: 'connection';
     tabId: number;
-}
-
-export interface ReceivedMsg extends Msg {
-    type: 'received';
 }
 
 export interface RemoveMsg extends Msg {
     type: 'remove';
     id: string;
+    // asyncIndex: number;
 }
 
 export type UpdateMsg =

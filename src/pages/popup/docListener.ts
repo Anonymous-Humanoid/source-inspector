@@ -1,9 +1,9 @@
-import { Mutex, MutexInterface } from 'async-mutex';
 import { v4 as uuid } from 'uuid';
+import { TIMEOUT_MS } from './background';
 import {
     PopupMsg,
-    ReceivedMsg,
     RemoveMsg,
+    ConnectMsg,
     UpdateCdataSectionMsg,
     UpdateCommentMsg,
     UpdateDoctypeMsg,
@@ -35,66 +35,24 @@ type PartialMutationRecord =
     | PartialCharacterDataMutationRecord;
 
 /**
- * A document source inspector. Communicates document
+ * The document source inspector. Communicates document
  * updates to a popup without invoking DevTools, thereby
- * circumventing most site interference detection
+ * circumventing debugger detection.
  */
 (async () => {
-    const msgMutex = new Mutex();
-
-    let _mutexRelease: MutexInterface.Releaser | undefined;
     let _connection: chrome.runtime.Port | undefined;
     let _observer: MutationObserver | undefined;
     let _elementMap = new WeakMap<Node, string>();
     let _initialDomConstructed = false;
     let _mutationCache = new Array<PartialMutationRecord>();
-
-    /**
-     * Acquires the messaging mutex, forcing synchronous
-     * messaging in an otherwise asynchronous context.
-     */
-    async function _acquireMsgMutex() {
-        _mutexRelease = await msgMutex.acquire();
-    }
-
-    /**
-     * Releases the messaging mutex,
-     * allowing synchronous messaging to continue.
-     * An error will be thrown if this function is
-     * called while the mutex is already released.
-     */
-    async function _releaseMsgMutex() {
-        if (_mutexRelease == null) {
-            console.warn('Messaging mutex already released');
-
-            return;
-        }
-
-        _mutexRelease();
-
-        _mutexRelease = undefined;
-    }
+    let _asyncIndex = 0;
 
     /**
      * Sends a message synchronously by acquiring the messaging mutex
      * @param msg The message to send
      */
-    async function _sendMessage(msg: PopupMsg): Promise<void> {
-        await _acquireMsgMutex();
-
+    async function _sendMessage(msg: ConnectMsg | PopupMsg): Promise<void> {
         _connection?.postMessage(msg);
-    }
-
-    /**
-     * Releases the messaging mutex, allowing synchronous messaging to continue
-     * @param msg The ACK message
-     */
-    function _messageReceived(msg: ReceivedMsg): void {
-        if (msg.type === 'received') {
-            _releaseMsgMutex();
-        } else {
-            console.error('Unknown message received:', msg);
-        }
     }
 
     /**
@@ -141,7 +99,8 @@ type PartialMutationRecord =
                 let id = _elementMap.get(node) as string;
                 let msg: RemoveMsg = {
                     type: 'remove',
-                    id
+                    id,
+                    asyncIndex: _asyncIndex++
                 };
 
                 _sendMessage(msg);
@@ -167,6 +126,7 @@ type PartialMutationRecord =
                     let msg: UpdateElementMsg = {
                         type: 'update',
                         id,
+                        asyncIndex: _asyncIndex++,
                         parentId,
                         nodeType: node.nodeType,
                         nodeName: node.nodeName,
@@ -187,6 +147,7 @@ type PartialMutationRecord =
                     let msg: UpdateCdataSectionMsg = {
                         type: 'update',
                         id,
+                        asyncIndex: _asyncIndex++,
                         parentId,
                         nodeType: node.nodeType,
                         nodeName: '#cdata-section',
@@ -207,6 +168,7 @@ type PartialMutationRecord =
                     let msg: UpdateCommentMsg = {
                         type: 'update',
                         id,
+                        asyncIndex: _asyncIndex++,
                         parentId,
                         nodeType: node.nodeType,
                         nodeName: '#comment',
@@ -227,6 +189,7 @@ type PartialMutationRecord =
                     let msg: UpdateDocumentMsg = {
                         type: 'update',
                         id,
+                        asyncIndex: _asyncIndex++,
                         nodeType: node.nodeType,
                         nodeName: '#document',
                         nodeValue: null,
@@ -248,6 +211,7 @@ type PartialMutationRecord =
                     let msg: UpdateDoctypeMsg = {
                         type: 'update',
                         id,
+                        asyncIndex: _asyncIndex++,
                         nodeType: node.nodeType,
                         nodeName: doctype.nodeName,
                         nodeValue: null,
@@ -345,7 +309,6 @@ type PartialMutationRecord =
      */
     function _disconnectConnection() {
         _connection?.onDisconnect.removeListener(_disconnect);
-        _connection?.onMessage.removeListener(_messageReceived);
         _connection?.disconnect();
 
         _connection = undefined;
@@ -385,7 +348,6 @@ type PartialMutationRecord =
         _disconnectBackground();
         window.addEventListener('beforeunload', _disconnect);
         _connection.onDisconnect.addListener(_disconnect);
-        _connection.onMessage.addListener(_messageReceived);
 
         // Observing DOM for changes
         _observer = new MutationObserver(_mutationsHandler);
@@ -394,7 +356,7 @@ type PartialMutationRecord =
             childList: true,
             subtree: true,
             attributes: true,
-            characterData: true,
+            characterData: true
             // attributeOldValue: true,
             // characterDataOldValue: true
         });
@@ -412,13 +374,10 @@ type PartialMutationRecord =
     function _connect(): void {
         // Notifying background we're ready to connect
         chrome.runtime.onConnect.addListener(_onConnect);
-        chrome.runtime.sendMessage({});
+        chrome.runtime.sendMessage({} as any);
         console.log('Tab ready to connect!');
 
         // Removing listener after fixed timeout
-        // NOTE: Equivalent to background timeout (5s)
-        const TIMEOUT_MS = 5_000;
-
         setTimeout(_disconnectBackground, TIMEOUT_MS);
     }
 
