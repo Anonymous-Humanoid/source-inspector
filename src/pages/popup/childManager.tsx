@@ -5,10 +5,12 @@ import {
     StoredVirtualDoctypeProps,
     StoredVirtualDocumentProps,
     StoredVirtualElementProps,
+    StoredVirtualTextNodeProps,
     VirtualCdataSection,
     VirtualDoctype,
     VirtualDocument,
-    VirtualElement
+    VirtualElement,
+    VirtualTextNode
 } from './components';
 import {
     StoredVirtualCommentProps,
@@ -22,17 +24,17 @@ interface ChildManagerProps {
     nodes: NodeState;
 }
 
-function renderDebug(props: Readonly<ChildManagerProps>): ReactNode {
+function renderDebug(id: Readonly<string>): ReactNode {
     return (
         process.env.NODE_ENV !== 'production' && (
-            <p className='debug node'>{props.id}</p>
+            <p className='debug node'>{id}</p>
         )
     );
 }
 
 function renderChildren(
-    node: StoredVirtualNodeProps,
-    nodes: NodeState
+    node: Readonly<StoredVirtualNodeProps>,
+    nodes: Readonly<NodeState>
 ): ReactElement[] {
     return node.childNodeIds.map((id) => (
         <ChildManager id={id} key={id} nodes={nodes} />
@@ -41,11 +43,11 @@ function renderChildren(
 
 function renderElement(
     props: Readonly<ChildManagerProps>,
-    node: StoredVirtualElementProps
+    node: Readonly<StoredVirtualElementProps>
 ): ReactElement {
     return (
         <>
-            {renderDebug(props)}
+            {renderDebug(props.id)}
             <VirtualElement
                 id={props.id}
                 nodeType={node.nodeType}
@@ -59,13 +61,33 @@ function renderElement(
     );
 }
 
-function renderCdataSection(
+function renderTextNode(
     props: Readonly<ChildManagerProps>,
-    node: StoredVirtualCdataSectionProps
+    node: Readonly<StoredVirtualTextNodeProps>
 ): ReactElement {
     return (
         <>
-            {renderDebug(props)}
+            {renderDebug(props.id)}
+            <VirtualTextNode
+                id={props.id}
+                nodeType={node.nodeType}
+                nodeName={node.nodeName}
+                nodeValue={node.nodeValue}
+                attributes={node.attributes}
+                parentId={node.parentId}
+                prevSiblingId={node.prevSiblingId}
+            />
+        </>
+    );
+}
+
+function renderCdataSection(
+    props: Readonly<ChildManagerProps>,
+    node: Readonly<StoredVirtualCdataSectionProps>
+): ReactElement {
+    return (
+        <>
+            {renderDebug(props.id)}
             <VirtualCdataSection
                 id={props.id}
                 nodeType={node.nodeType}
@@ -81,17 +103,17 @@ function renderCdataSection(
 
 function renderComment(
     props: Readonly<ChildManagerProps>,
-    node: StoredVirtualCommentProps
+    node: Readonly<StoredVirtualCommentProps>
 ): ReactElement {
     return (
         <>
-            {renderDebug(props)}
+            {renderDebug(props.id)}
             <VirtualComment
                 id={props.id}
                 nodeType={node.nodeType}
                 nodeName={node.nodeName}
                 nodeValue={node.nodeValue}
-                attributes={{}}
+                attributes={node.attributes}
                 parentId={node.parentId}
                 prevSiblingId={node.prevSiblingId}
             />
@@ -101,11 +123,11 @@ function renderComment(
 
 function renderDocument(
     props: Readonly<ChildManagerProps>,
-    node: StoredVirtualDocumentProps
+    node: Readonly<StoredVirtualDocumentProps>
 ): ReactElement {
     return (
         <>
-            {renderDebug(props)}
+            {renderDebug(props.id)}
             <VirtualDocument
                 id={props.id}
                 nodeType={node.nodeType}
@@ -122,11 +144,11 @@ function renderDocument(
 
 function renderDoctype(
     props: Readonly<ChildManagerProps>,
-    node: StoredVirtualDoctypeProps
+    node: Readonly<StoredVirtualDoctypeProps>
 ): ReactElement {
     return (
         <>
-            {renderDebug(props)}
+            {renderDebug(props.id)}
             <VirtualDoctype
                 id={props.id}
                 nodeType={node.nodeType}
@@ -148,8 +170,14 @@ export function ChildManager(props: Readonly<ChildManagerProps>) {
         case Node.ELEMENT_NODE: {
             return renderElement(props, node as StoredVirtualElementProps);
         }
+        case Node.TEXT_NODE: {
+            return renderTextNode(props, node as StoredVirtualTextNodeProps);
+        }
         case Node.CDATA_SECTION_NODE: {
-            return renderCdataSection(props, node as StoredVirtualCdataSectionProps);
+            return renderCdataSection(
+                props,
+                node as StoredVirtualCdataSectionProps
+            );
         }
         case Node.COMMENT_NODE: {
             return renderComment(props, node as StoredVirtualCommentProps);
@@ -161,7 +189,6 @@ export function ChildManager(props: Readonly<ChildManagerProps>) {
             return renderDoctype(props, node as StoredVirtualDoctypeProps);
         }
         case Node.ATTRIBUTE_NODE:
-        case Node.TEXT_NODE:
         case Node.ENTITY_REFERENCE_NODE:
         case Node.ENTITY_NODE:
         case Node.PROCESSING_INSTRUCTION_NODE:
@@ -170,7 +197,7 @@ export function ChildManager(props: Readonly<ChildManagerProps>) {
         default: {
             return (
                 <>
-                    {renderDebug(props)}
+                    {renderDebug(props.id)}
                     <pre key={props.id}>
                         {`Unsupported node type: ${node.nodeType}`}
                     </pre>

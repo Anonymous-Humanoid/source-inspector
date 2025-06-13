@@ -1,9 +1,10 @@
 import { v4 as uuid } from 'uuid';
 import { TIMEOUT_MS } from './background';
+import { UpdateTextNodeMsg } from './components';
 import {
+    ConnectMsg,
     PopupMsg,
     RemoveMsg,
-    ConnectMsg,
     UpdateCdataSectionMsg,
     UpdateCommentMsg,
     UpdateDoctypeMsg,
@@ -138,6 +139,27 @@ type PartialMutationRecord =
                     _sendMessage(msg);
                     break;
                 }
+                case Node.TEXT_NODE: {
+                    let parentId = _getId(mutation.target!);
+                    let prevSiblingId =
+                        node.previousSibling == null
+                            ? undefined
+                            : _getId(node.previousSibling);
+                    let msg: UpdateTextNodeMsg = {
+                        type: 'update',
+                        id,
+                        asyncIndex: _asyncIndex++,
+                        parentId,
+                        nodeType: node.nodeType,
+                        nodeName: '#text',
+                        nodeValue: node.nodeValue ?? '',
+                        attributes: {},
+                        prevSiblingId
+                    };
+
+                    _sendMessage(msg);
+                    break;
+                }
                 case Node.CDATA_SECTION_NODE: {
                     let parentId = _getId(mutation.target!);
                     let prevSiblingId =
@@ -226,7 +248,6 @@ type PartialMutationRecord =
                     break;
                 }
                 case Node.ATTRIBUTE_NODE:
-                case Node.TEXT_NODE:
                 case Node.ENTITY_REFERENCE_NODE:
                 case Node.ENTITY_NODE:
                 case Node.PROCESSING_INSTRUCTION_NODE:

@@ -5,7 +5,8 @@ import {
     StoredVirtualCdataSectionProps,
     StoredVirtualDoctypeProps,
     StoredVirtualDocumentProps,
-    StoredVirtualElementProps
+    StoredVirtualElementProps,
+    StoredVirtualTextNodeProps
 } from './components';
 import { StoredVirtualCommentProps } from './components/comment';
 import { ConnectMsg, PopupMsg, UpdateMsg } from './msgs';
@@ -254,7 +255,22 @@ export default function StateManager() {
                 insertNode(state, msg.id, parentId, msg.prevSiblingId);
                 break;
             }
-            case Node.TEXT_NODE:
+            case Node.TEXT_NODE: {
+                let parentId = msg.parentId;
+
+                if (parentId == null || !(parentId in nodes)) {
+                    console.error(`Anomalous node parent update:`, msg);
+                    return;
+                }
+
+                let state: StoredVirtualTextNodeProps = {
+                    ...msg,
+                    childNodeIds: []
+                };
+
+                insertNode(state, msg.id, parentId, msg.prevSiblingId);
+                break;
+            }
             case Node.ATTRIBUTE_NODE:
             case Node.ENTITY_REFERENCE_NODE:
             case Node.ENTITY_NODE:

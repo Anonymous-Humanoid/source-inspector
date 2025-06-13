@@ -3,7 +3,8 @@ import {
     UpdateCommentMsg,
     UpdateDoctypeMsg,
     UpdateDocumentMsg,
-    UpdateElementMsg
+    UpdateElementMsg,
+    UpdateTextNodeMsg
 } from './components';
 
 export {
@@ -29,7 +30,6 @@ export interface ConnectMsg extends Omit<Msg, 'asyncIndex'> {
 export interface RemoveMsg extends Msg {
     type: 'remove';
     id: string;
-    // asyncIndex: number;
 }
 
 export type UpdateMsg =
@@ -58,11 +58,6 @@ export interface BaseUpdateMsg extends Msg {
 
 export interface UpdateAttributeNodeMsg extends BaseUpdateMsg {
     nodeType: Node['ATTRIBUTE_NODE'];
-}
-
-export interface UpdateTextNodeMsg extends BaseUpdateMsg {
-    nodeType: Node['TEXT_NODE'];
-    nodeValue: string;
 }
 
 export interface UpdateEntityRefMsg extends BaseUpdateMsg {

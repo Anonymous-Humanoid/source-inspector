@@ -34,7 +34,9 @@
 
 ## Technical Priorities
 
-- StateManager needs to process multiple messages per render to avoid
+- Mark unmodified properties `T` as `Readonly<T>` or `const`
+- StateManager needs to process multiple messages per render
+  or defer rendering to avoid
   `Uncaught Error: Too many re-renders. React limits the number of renders`
   `to prevent an infinite loop` on complex websites
 - Move top-level configuration files to their own folder
@@ -62,7 +64,6 @@
 - Replace shared assert function with node:assert.assert
 - Remove redundant information from messages and props
 - Create and add donation medium
-- Use TypeScript namespaces for code separation
 - Modify ESLint config:
 
   - Currently using deprecated rules, see:
