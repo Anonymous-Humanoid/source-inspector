@@ -34,7 +34,9 @@
 
 ## Technical Priorities
 
-- Use the streams API to more cleanly manage message queueing
+- StateManager needs to process multiple messages per render to avoid
+  `Uncaught Error: Too many re-renders. React limits the number of renders`
+  `to prevent an infinite loop` on complex websites
 - Move top-level configuration files to their own folder
 - Migrate ChildManager to a
   [reducer](https://react.dev/learn/extracting-state-logic-into-a-reducer)
