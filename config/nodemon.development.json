@@ -16,7 +16,8 @@
         "ASSET_PATH": "/",
         "OUTPUT_DIR": "build",
         "PACKAGE_NAME": "(DEV BRANCH) source-inspector",
-        "PACKAGE_DESCRIPTION": "DEVELOPER USE ONLY - DO NOT PUBLISH"
+        "PACKAGE_DESCRIPTION": "DEVELOPER USE ONLY - DO NOT PUBLISH",
+        "WEBPACK_PORT": "8080"
     },
     "ext": "json,cjs,mjs,js,ts,babelrc"
 }

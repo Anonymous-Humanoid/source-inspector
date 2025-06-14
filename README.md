@@ -89,10 +89,10 @@ In order to use this extension, you must first build it from source.
 - Open your IDE or terminal to the root of the project
 - Run `npm install` to install dependencies
 - To build the extension, start a development server:
-  - For users, run `npm run start:prod` to run in production mode.
+  - For users, run `npm run start:prod` to run in production mode (port 8081).
     This will create a folder `dist` containing the built extension.
   - For developers, run `npm run start:dev` or `npm start`
-    to run in development mode. They are equivalent.
+    to run in development mode (port 8080). They are equivalent.
     This will create a folder `build` containing the built extension.
 - Optionally, when the server says that webpack has compiled successfully,
   you can stop the server. (Ctrl+C, or Command+C on Mac)

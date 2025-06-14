@@ -34,8 +34,6 @@
 
 ## Technical Priorities
 
-- Force dev and prod webpack servers to use different ports
-  because of race condition in port assignment.
 - Mark unmodified properties `T` as `Readonly<T>` or `const`
 - StateManager needs to process multiple messages per render
   or defer rendering to avoid
