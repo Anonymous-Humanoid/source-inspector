@@ -3,32 +3,64 @@ import { StoredVirtualNodeProps } from './base';
 import { ChildManager, NodeState } from './childManager';
 import {
     StoredVirtualCdataSectionProps,
+    StoredVirtualCommentProps,
     StoredVirtualDoctypeProps,
     StoredVirtualDocumentProps,
-    StoredVirtualElementProps
+    StoredVirtualElementProps,
+    StoredVirtualTextProps
 } from './components';
-import { StoredVirtualCommentProps } from './components/comment';
-import {
-    ConnectMsg,
-    PopupMsg,
-    ReceivedMsg,
-    UpdateMsg
-} from './msgs';
+import { ConnectMsg, PopupMsg, UpdateMsg } from './msgs';
+
+function binarySearch<T>(
+    arr: Readonly<T[]>,
+    e: Readonly<T>,
+    comparator: (eArr: T, e: T) => number
+): number {
+    // https://stackoverflow.com/a/29018745
+    let m = 0;
+    let n = arr.length - 1;
+
+    while (m <= n) {
+        const k = (n + m) >> 1;
+        const cmp = comparator(arr[k], e);
+
+        if (cmp > 0) {
+            m = k + 1;
+        } else if (cmp < 0) {
+            n = k - 1;
+        } else {
+            return k;
+        }
+    }
+
+    return m;
+}
+
+function insertMsg(
+    queue: Readonly<PopupMsg[]>,
+    msg: Readonly<PopupMsg>
+): PopupMsg[] {
+    return queue.toSpliced(
+        binarySearch(queue, msg, (a, b) => b.asyncIndex - a.asyncIndex),
+        0,
+        msg
+    );
+}
 
 function insertAfterSibling(
-    childNodeIds: string[],
-    prevSiblingId: string | undefined,
-    id: string
+    childNodeIds: Readonly<string[]>,
+    prevSiblingId: Readonly<string | undefined>,
+    id: Readonly<string>
 ): string[] {
     if (prevSiblingId == null) {
         return [id, ...childNodeIds];
     }
 
-    let prevSiblingIds = [];
-    let nextSiblingIds = [];
+    const prevSiblingIds = [];
+    const nextSiblingIds = [];
     let prevSiblingFound = false;
 
-    for (let siblingId of childNodeIds) {
+    for (const siblingId of childNodeIds) {
         if (prevSiblingFound) {
             nextSiblingIds.push(siblingId);
         } else {
@@ -48,8 +80,8 @@ function insertAfterSibling(
  * Will do nothing if the connected document can't
  * establish or severs the connection. Due to the
  * connection effect, this component is not expected
- * to work properly in development with strict mode
- * enabled.
+ * to work properly in development with React's strict
+ * mode enabled.
  *
  * @returns The document source inspection UI component
  */
@@ -59,23 +91,22 @@ export default function StateManager() {
     const [root, setRoot] = useState<string | undefined>();
     const [nodes, setNodes] = useState<NodeState>({});
     const [queue, setQueue] = useState<PopupMsg[]>([]);
-    let [connection, setConnection] = useState<
-        chrome.runtime.Port | undefined
-    >();
+    const [queueIndex, setQueueIndex] = useState<number>(0);
 
     if (firstRun && root == null) {
         // Notifying background page we're ready to connect
         setFirstRun(false);
         chrome.runtime.onMessage.addListener(generateDocument);
-        chrome.runtime.sendMessage({});
+        chrome.runtime.sendMessage({} as any);
         console.log('Popup ready to connect!');
-    } else if (queue.length > 0) {
+    } else if (queue[0]?.asyncIndex === queueIndex) {
         // Sending queued messages
         // Relies on state 'nodes', so only one message is processed per render
-        const msg = queue.shift()!;
+        const msg = queue[0];
 
-        handleMessage(msg);
+        processMessage(msg);
         setQueue((queue) => queue.slice(1));
+        setQueueIndex((i) => i + 1);
     }
 
     // Configuring connection effect
@@ -88,12 +119,8 @@ export default function StateManager() {
         if (tabId != null) {
             newConnection = chrome.tabs.connect(tabId);
 
-            setConnection(newConnection);
-
             newConnection.onDisconnect.addListener(onDisconnect);
             newConnection.onMessage.addListener(queueMessage);
-
-            connection = newConnection;
 
             console.log(`Successfully connected to tab ${tabId}!`);
         }
@@ -111,16 +138,16 @@ export default function StateManager() {
      * @param prevSiblingId The previous sibling virtual node id
      */
     function insertNode(
-        state: StoredVirtualNodeProps,
-        id: string,
-        parentId: string | null = null,
-        prevSiblingId: string | undefined = undefined
+        state: Readonly<StoredVirtualNodeProps>,
+        id: Readonly<string>,
+        parentId: Readonly<string | null> = null,
+        prevSiblingId: Readonly<string | undefined> = undefined
     ): void {
         // Handling root node
         if (parentId == null) {
             if (root != null) {
-                let rootMsg = [`Anomalous root node update on id:`, id];
-                let siblingMsg =
+                const rootMsg = [`Anomalous root node update on id:`, id];
+                const siblingMsg =
                     prevSiblingId == null
                         ? []
                         : ['\nUnexpected prevSiblingId:', prevSiblingId];
@@ -164,17 +191,17 @@ export default function StateManager() {
      * of its children from the virtual DOM tree
      * @param id The virtual node id to remove
      */
-    function removeNode(id: string): void {
+    function removeNode(id: Readonly<string>): void {
         if (id == null || !(id in nodes)) {
             console.error(`Anomalous node removal:`, id);
             return;
         }
 
         setNodes((prevNodes) => {
-            let nextNodes = { ...prevNodes };
-            let node = nextNodes[id];
-            let parentId = node.parentId;
-            let childNodeIds = [...node.childNodeIds];
+            const nextNodes = { ...prevNodes };
+            const node = nextNodes[id];
+            const parentId = node.parentId;
+            const childNodeIds = [...node.childNodeIds];
             let currentId: string | undefined;
 
             // Removing references to node
@@ -186,7 +213,7 @@ export default function StateManager() {
 
             // Iteratively removing references to node children
             while ((currentId = childNodeIds.pop()) != null) {
-                let currentNode = nextNodes[currentId];
+                const currentNode = nextNodes[currentId];
 
                 childNodeIds.push(...currentNode.childNodeIds);
 
@@ -197,10 +224,10 @@ export default function StateManager() {
         });
     }
 
-    function updateNodeHandler(msg: UpdateMsg): void {
+    function updateNodeHandler(msg: Readonly<UpdateMsg>): void {
         switch (msg.nodeType) {
             case Node.DOCUMENT_NODE: {
-                let state: StoredVirtualDocumentProps = {
+                const state: StoredVirtualDocumentProps = {
                     ...msg,
                     childNodeIds: []
                 };
@@ -212,14 +239,18 @@ export default function StateManager() {
             case Node.CDATA_SECTION_NODE:
             case Node.COMMENT_NODE:
             case Node.DOCUMENT_TYPE_NODE: {
-                let parentId = msg.parentId;
+                const parentId = msg.parentId;
 
                 if (parentId == null || !(parentId in nodes)) {
                     console.error(`Anomalous node parent update:`, msg);
                     return;
                 }
 
-                let state: StoredVirtualElementProps | StoredVirtualCdataSectionProps | StoredVirtualCommentProps | StoredVirtualDoctypeProps = {
+                const state:
+                    | StoredVirtualElementProps
+                    | StoredVirtualCdataSectionProps
+                    | StoredVirtualCommentProps
+                    | StoredVirtualDoctypeProps = {
                     ...msg,
                     childNodeIds: []
                 };
@@ -227,7 +258,22 @@ export default function StateManager() {
                 insertNode(state, msg.id, parentId, msg.prevSiblingId);
                 break;
             }
-            case Node.TEXT_NODE:
+            case Node.TEXT_NODE: {
+                const parentId = msg.parentId;
+
+                if (parentId == null || !(parentId in nodes)) {
+                    console.error(`Anomalous node parent update:`, msg);
+                    return;
+                }
+
+                const state: StoredVirtualTextProps = {
+                    ...msg,
+                    childNodeIds: []
+                };
+
+                insertNode(state, msg.id, parentId, msg.prevSiblingId);
+                break;
+            }
             case Node.ATTRIBUTE_NODE:
             case Node.ENTITY_REFERENCE_NODE:
             case Node.ENTITY_NODE:
@@ -248,13 +294,8 @@ export default function StateManager() {
      * Places the given message into a queue for processing
      * @param msg
      */
-    function queueMessage(msg: PopupMsg): void {
-        setQueue((queue) => [...queue, msg]);
-
-        // Notifying content script we've received the last message
-        let ack: ReceivedMsg = { type: 'received' };
-
-        connection?.postMessage(ack);
+    function queueMessage(msg: Readonly<PopupMsg>): void {
+        setQueue((queue) => insertMsg(queue, msg));
     }
 
     /**
@@ -262,8 +303,8 @@ export default function StateManager() {
      * virtual DOM tree modification if successful
      * @param msg
      */
-    function handleMessage(msg: PopupMsg): void {
-        switch (msg.type) {
+    function processMessage(msg: Readonly<PopupMsg>): void {
+        switch (msg?.type) {
             case 'update': {
                 updateNodeHandler(msg);
                 break;
@@ -285,8 +326,8 @@ export default function StateManager() {
      * @param sender The message sender
      */
     function generateDocument(
-        msg: ConnectMsg,
-        sender: chrome.runtime.MessageSender
+        msg: Readonly<ConnectMsg>,
+        sender: Readonly<chrome.runtime.MessageSender>
     ): void {
         if (
             sender.id === chrome.runtime.id &&
@@ -300,13 +341,11 @@ export default function StateManager() {
     }
 
     function onDisconnect(): void {
-        setConnection(undefined);
-
         console.log('Disconnected from tab!');
     }
 
     // Rendering popup
-    let childNodes =
+    const childNodes =
         root == null ? undefined : <ChildManager id={root} nodes={nodes} />;
 
     return <main id='app'>{childNodes}</main>;

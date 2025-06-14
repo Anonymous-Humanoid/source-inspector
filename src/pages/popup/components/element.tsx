@@ -3,7 +3,7 @@ import { BaseUpdateMsg } from '../msgs';
 
 interface SharedValues {
     nodeType: Node['ELEMENT_NODE'];
-    attributes: {};
+    attributes: Record<string, string>;
 }
 
 export type UpdateElementMsg = BaseUpdateMsg & SharedValues;

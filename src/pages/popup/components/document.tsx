@@ -6,7 +6,7 @@ interface SharedValues {
     nodeType: Node['DOCUMENT_NODE'];
     nodeName: '#document';
     nodeValue: null;
-    attributes: {};
+    attributes: Record<string, never>;
     prevSiblingId?: undefined;
     documentURI: string;
 }
