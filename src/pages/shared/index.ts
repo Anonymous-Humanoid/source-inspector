@@ -11,18 +11,20 @@ export class AssertionError extends Error {
     /**
      * @param msg The error message
      */
-    constructor(msg?: string) {
+    constructor(msg?: Readonly<string | undefined>) {
         super(msg ?? 'Assertion failed');
     }
 }
 
-// TODO Replace assert with node:assert.assert
 /**
  * Throws an {@link AssertionError} if the given expression is falsey
  * @param expr
  * @param msg
  */
-export function assert(expr: boolean, msg?: string): asserts expr is true {
+export function assert(
+    expr: Readonly<boolean>,
+    msg?: Readonly<string | undefined>
+): asserts expr is true {
     if (!expr) {
         throw new AssertionError(msg);
     }
@@ -32,7 +34,7 @@ export function assert(expr: boolean, msg?: string): asserts expr is true {
  * Returns a promise that resolves when the given time has passed
  * @param sec The time to sleep in milliseconds
  */
-export function sleep(ms: number): Promise<void> {
+export function sleep(ms: Readonly<number>): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
@@ -43,11 +45,11 @@ export function sleep(ms: number): Promise<void> {
  * @param evaluator
  */
 export function* xpath(
-    xpath: string,
-    parent: Node = document,
-    evaluator: XPathEvaluatorBase = document
+    xpath: Readonly<string>,
+    parent: Readonly<Node> = document,
+    evaluator: Readonly<XPathEvaluatorBase> = document
 ): Generator<Node> {
-    let query = evaluator.evaluate(
+    const query = evaluator.evaluate(
         xpath,
         parent,
         null,
@@ -56,7 +58,7 @@ export function* xpath(
     );
 
     for (let i = 0, length = query.snapshotLength; i < length; ++i) {
-        let out = query.snapshotItem(i);
+        const out = query.snapshotItem(i);
 
         if (out != null) {
             yield out;

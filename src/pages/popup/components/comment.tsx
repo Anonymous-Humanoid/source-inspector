@@ -7,8 +7,8 @@ interface SharedValues {
     nodeType: Node['COMMENT_NODE'];
     nodeName: '#comment';
     nodeValue: string;
-    attributes: {};
-    prevSiblingId?: undefined;
+    attributes: Record<string, never>;
+    prevSiblingId?: string;
     children?: never[];
 }
 

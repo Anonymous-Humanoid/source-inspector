@@ -24,7 +24,8 @@
         "resolveJsonModule": true,
         "noEmit": false,
         "jsx": "react",
-        "typeRoots": ["./node_modules/@types"]
+        "typeRoots": ["./node_modules/@types"],
+        "noErrorTruncation": true // See fully expanded types
     },
     "include": ["src"],
     "exclude": ["build", "dist", "node_modules", "zip"],
