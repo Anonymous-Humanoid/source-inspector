@@ -27,14 +27,13 @@
   - Have attributes and text referenced through an ID in virtual nodes instead
     of storing key-value pairs and regenerating keys by a fixed pattern
 - Support character data mutations
-- Finish supporting all node types
-  - Test nested document nodes
+- Finish supporting all applicable node types
+  - Test nested document nodes (see: [SO](https://stackoverflow.com/questions/26010355/is-there-a-way-to-uniquely-identify-an-iframe-that-the-content-script-runs-in-fo))
   - Shadow roots can be accessed using
     [`chrome.dom.openOrClosedShadowRoot`](https://developer.chrome.com/docs/extensions/reference/api/dom?hl=en#method-openOrClosedShadowRoot)
 
 ## Technical Priorities
 
-- Mark unmodified properties `T` as `Readonly<T>` or `const`
 - StateManager needs to process multiple messages per render
   or defer rendering to avoid
   `Uncaught Error: Too many re-renders. React limits the number of renders`
@@ -60,7 +59,6 @@
 
 ## Future Priorities
 
-- Reduce the lag caused by pushing the initial DOM
 - Replace shared assert function with node:assert.assert
 - Remove redundant information from messages and props
 - Create and add donation medium

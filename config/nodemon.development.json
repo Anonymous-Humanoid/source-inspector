@@ -7,17 +7,15 @@
         "./config/webpack.config.ts",
         "./src/react-app-env.d.ts",
         "package-lock.json",
-        "tsconfig.json",
-        ".babelrc"
+        "tsconfig.json"
     ],
     "env": {
         "NODE_ENV": "development",
-        "BABEL_ENV": "development",
         "ASSET_PATH": "/",
         "OUTPUT_DIR": "build",
         "PACKAGE_NAME": "(DEV BRANCH) source-inspector",
         "PACKAGE_DESCRIPTION": "DEVELOPER USE ONLY - DO NOT PUBLISH",
         "WEBPACK_PORT": "8080"
     },
-    "ext": "json,cjs,mjs,js,ts,babelrc"
+    "ext": "json,cjs,mjs,js,ts"
 }

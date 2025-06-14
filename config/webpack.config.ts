@@ -185,9 +185,6 @@ const CONFIG: webpack.Configuration = {
                 use: [
                     {
                         loader: 'source-map-loader'
-                    },
-                    {
-                        loader: require.resolve('babel-loader')
                     }
                 ]
             }
