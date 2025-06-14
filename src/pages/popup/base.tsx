@@ -1,12 +1,11 @@
-import React, { Fragment, ReactElement, ReactNode } from 'react';
-
-export type AttrDict = { [key: string]: string };
+import React, { ReactNode } from 'react';
+import { VirtualInlineText, VirtualAttribute } from './components';
 
 export interface StoredVirtualNodeProps {
     nodeType: number;
     nodeName: string;
     nodeValue: string | null;
-    attributes: AttrDict;
+    attributes: Record<string, string>;
     childNodeIds: string[];
     parentId?: string;
 }
@@ -20,11 +19,11 @@ export interface VirtualNodeProps
 }
 
 export function VirtualNode(props: Readonly<VirtualNodeProps>) {
-    let attrs =
+    const attrs =
         props.attributes == null
             ? ''
             : Object.entries(props.attributes).map(([name, value]) => {
-                  let id = `${props.id}-attr-${name}`;
+                  const id = `${props.id}-attr-${name}`;
 
                   return (
                       <VirtualAttribute
@@ -34,100 +33,20 @@ export function VirtualNode(props: Readonly<VirtualNodeProps>) {
                           nodeName={name}
                           nodeType={Node['ATTRIBUTE_NODE']}
                           attributes={{}}
-                          childNodeIds={[]}
                       />
                   );
               });
-
-    let inlineTextId = `${props.id}-inline`;
 
     return (
         <pre className='node' key={props.id}>
             {`<${props.nodeName}`}
             {attrs}&gt;
             <VirtualInlineText
-                id={inlineTextId}
-                nodeValue={props.nodeValue}
-                nodeType={Node['TEXT_NODE']}
-                nodeName='#text'
-                attributes={{}}
-                childNodeIds={[]}
+                parentId={props.id}
+                nodeValue={props.nodeValue ?? ''}
             />
             {props.children}
             {`</${props.nodeName}>`}
         </pre>
-    );
-}
-
-interface VirtualTextProps {
-    id: string;
-    nodeType: Node['TEXT_NODE'];
-    nodeName: '#text';
-    nodeValue: string | null;
-    attributes: {};
-    childNodeIds: never[];
-    parentId?: string;
-}
-
-/**
- * The document source inline text node virtual component
- */
-export function VirtualInlineText(
-    props: Readonly<VirtualTextProps>
-): ReactElement {
-    return (
-        <div className='text' key={props.id} id={props.id}>
-            {props.nodeValue}
-        </div>
-    );
-}
-
-/**
- * The document source block text node virtual component
- */
-export function VirtualTextNode(
-    props: Readonly<VirtualTextProps>
-): ReactElement {
-    return (
-        <div className='node'>
-            <VirtualInlineText
-                id={props.id}
-                nodeValue={props.nodeValue}
-                nodeType={Node['TEXT_NODE']}
-                nodeName='#text'
-                attributes={{}}
-                childNodeIds={[]}
-            />
-        </div>
-    );
-}
-
-interface VirtualAttributeProps {
-    id: string;
-    nodeType: Node['ATTRIBUTE_NODE'];
-    nodeName: string;
-    nodeValue: string | null;
-    attributes: {};
-    childNodeIds: never[];
-    parentId?: string;
-}
-
-/**
- * The document source element attribute Virtual component
- */
-export function VirtualAttribute(
-    props: Readonly<VirtualAttributeProps>
-): ReactElement {
-    return (
-        <Fragment key={props.id}>
-            <div className='attr'>{' ' + props.nodeName}</div>
-            {props.nodeValue == null ? undefined : (
-                <>
-                    <div>="</div>
-                    <div className='string'>{props.nodeValue}</div>
-                    <div>"</div>
-                </>
-            )}
-        </Fragment>
     );
 }

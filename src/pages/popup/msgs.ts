@@ -3,7 +3,8 @@ import {
     UpdateCommentMsg,
     UpdateDoctypeMsg,
     UpdateDocumentMsg,
-    UpdateElementMsg
+    UpdateElementMsg,
+    UpdateTextMsg
 } from './components';
 
 export {
@@ -11,24 +12,20 @@ export {
     UpdateCommentMsg,
     UpdateDoctypeMsg,
     UpdateDocumentMsg,
-    UpdateElementMsg
+    UpdateElementMsg,
+    UpdateTextMsg
 };
 
-export type AnyMsg = PopupMsg | ReceivedMsg;
-
-export type PopupMsg = ConnectMsg | RemoveMsg | UpdateMsg;
+export type PopupMsg = RemoveMsg | UpdateMsg;
 
 interface Msg {
     type: string;
+    asyncIndex: number;
 }
 
-export interface ConnectMsg extends Msg {
+export interface ConnectMsg extends Omit<Msg, 'asyncIndex'> {
     type: 'connection';
     tabId: number;
-}
-
-export interface ReceivedMsg extends Msg {
-    type: 'received';
 }
 
 export interface RemoveMsg extends Msg {
@@ -39,7 +36,7 @@ export interface RemoveMsg extends Msg {
 export type UpdateMsg =
     | UpdateElementMsg
     | UpdateAttributeNodeMsg
-    | UpdateTextNodeMsg
+    | UpdateTextMsg
     | UpdateCdataSectionMsg
     | UpdateEntityRefMsg
     | UpdateEntityMsg
@@ -62,11 +59,6 @@ export interface BaseUpdateMsg extends Msg {
 
 export interface UpdateAttributeNodeMsg extends BaseUpdateMsg {
     nodeType: Node['ATTRIBUTE_NODE'];
-}
-
-export interface UpdateTextNodeMsg extends BaseUpdateMsg {
-    nodeType: Node['TEXT_NODE'];
-    nodeValue: string;
 }
 
 export interface UpdateEntityRefMsg extends BaseUpdateMsg {
