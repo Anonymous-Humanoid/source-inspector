@@ -3,28 +3,26 @@ import { NonStoredProps, StoredVirtualNodeProps } from '../base';
 import { BaseUpdateMsg } from '../msgs';
 
 interface SharedValues {
+    parentId: string;
     nodeType: Node['TEXT_NODE'];
     nodeName: '#text';
     nodeValue: string;
     attributes: Record<string, never>;
-    parentId?: string;
     prevSiblingId?: string;
     children?: never[];
 }
 
-export type UpdateTextNodeMsg = BaseUpdateMsg & SharedValues;
+export type UpdateTextMsg = BaseUpdateMsg & SharedValues;
 
-export type StoredVirtualTextNodeProps = StoredVirtualNodeProps &
+export type StoredVirtualTextProps = StoredVirtualNodeProps &
     SharedValues & { childNodeIds: never[] };
 
-export type VirtualTextNodeProps = NonStoredProps<StoredVirtualTextNodeProps>;
+export type VirtualTextProps = NonStoredProps<StoredVirtualTextProps>;
 
 /**
  * The document source block virtual text node component
  */
-export function VirtualTextNode(
-    props: Readonly<VirtualTextNodeProps>
-): ReactElement {
+export function VirtualText(props: Readonly<VirtualTextProps>): ReactElement {
     const hidden = props.nodeValue === '';
 
     return (
@@ -41,7 +39,7 @@ export function VirtualTextNode(
     );
 }
 
-export interface VirtualInlineTextNodeProps {
+export interface VirtualInlineTextProps {
     parentId: string;
     nodeValue: string;
 }
@@ -50,7 +48,7 @@ export interface VirtualInlineTextNodeProps {
  * The document source virtual inline text node component
  */
 export function VirtualInlineText(
-    props: Readonly<VirtualInlineTextNodeProps>
+    props: Readonly<VirtualInlineTextProps>
 ): ReactElement {
     return (
         <div

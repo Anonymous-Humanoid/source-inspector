@@ -4,7 +4,7 @@ import {
     UpdateDoctypeMsg,
     UpdateDocumentMsg,
     UpdateElementMsg,
-    UpdateTextNodeMsg
+    UpdateTextMsg
 } from './components';
 
 export {
@@ -12,7 +12,8 @@ export {
     UpdateCommentMsg,
     UpdateDoctypeMsg,
     UpdateDocumentMsg,
-    UpdateElementMsg
+    UpdateElementMsg,
+    UpdateTextMsg
 };
 
 export type PopupMsg = RemoveMsg | UpdateMsg;
@@ -35,7 +36,7 @@ export interface RemoveMsg extends Msg {
 export type UpdateMsg =
     | UpdateElementMsg
     | UpdateAttributeNodeMsg
-    | UpdateTextNodeMsg
+    | UpdateTextMsg
     | UpdateCdataSectionMsg
     | UpdateEntityRefMsg
     | UpdateEntityMsg

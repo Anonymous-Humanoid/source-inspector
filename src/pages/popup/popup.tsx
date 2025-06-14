@@ -6,7 +6,7 @@ import {
     StoredVirtualDoctypeProps,
     StoredVirtualDocumentProps,
     StoredVirtualElementProps,
-    StoredVirtualTextNodeProps
+    StoredVirtualTextProps
 } from './components';
 import { StoredVirtualCommentProps } from './components/comment';
 import { ConnectMsg, PopupMsg, UpdateMsg } from './msgs';
@@ -263,7 +263,7 @@ export default function StateManager() {
                     return;
                 }
 
-                let state: StoredVirtualTextNodeProps = {
+                let state: StoredVirtualTextProps = {
                     ...msg,
                     childNodeIds: []
                 };

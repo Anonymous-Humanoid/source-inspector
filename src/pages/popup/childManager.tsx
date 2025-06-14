@@ -5,12 +5,12 @@ import {
     StoredVirtualDoctypeProps,
     StoredVirtualDocumentProps,
     StoredVirtualElementProps,
-    StoredVirtualTextNodeProps,
+    StoredVirtualTextProps,
     VirtualCdataSection,
     VirtualDoctype,
     VirtualDocument,
     VirtualElement,
-    VirtualTextNode
+    VirtualText
 } from './components';
 import {
     StoredVirtualCommentProps,
@@ -61,14 +61,14 @@ function renderElement(
     );
 }
 
-function renderTextNode(
+function renderText(
     props: Readonly<ChildManagerProps>,
-    node: Readonly<StoredVirtualTextNodeProps>
+    node: Readonly<StoredVirtualTextProps>
 ): ReactElement {
     return (
         <>
             {renderDebug(props.id)}
-            <VirtualTextNode
+            <VirtualText
                 id={props.id}
                 nodeType={node.nodeType}
                 nodeName={node.nodeName}
@@ -171,7 +171,7 @@ export function ChildManager(props: Readonly<ChildManagerProps>) {
             return renderElement(props, node as StoredVirtualElementProps);
         }
         case Node.TEXT_NODE: {
-            return renderTextNode(props, node as StoredVirtualTextNodeProps);
+            return renderText(props, node as StoredVirtualTextProps);
         }
         case Node.CDATA_SECTION_NODE: {
             return renderCdataSection(
