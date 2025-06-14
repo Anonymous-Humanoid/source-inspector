@@ -22,7 +22,7 @@ const IS_DEV_MODE = process.env.NODE_ENV !== 'production';
 
 // Copying icons
 const VALID_SIZES = [16, 32, 48, 128].map((size) => size.toString());
-let relativeIconPaths = [
+const relativeIconPaths = [
     ...new Map<string, [string, string]>(
         VALID_SIZES.map((size) => [
             size,
@@ -36,7 +36,7 @@ let relativeIconPaths = [
 
 // Generating manifest file
 const BACKGROUND_OUTPUT_PATH = path.join('background', 'index.js');
-let manifestIconPaths: { [size: string]: string } = {};
+const manifestIconPaths: { [size: string]: string } = {};
 
 relativeIconPaths.forEach(([size, [inputPath, outputPath]]) => {
     manifestIconPaths[size] = outputPath;
@@ -128,9 +128,6 @@ const CONFIG: webpack.Configuration = {
                 '.css'
             ]
         )
-    },
-    devServer: {
-        hot: true
     },
     module: {
         rules: [

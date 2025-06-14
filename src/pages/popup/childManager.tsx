@@ -2,20 +2,18 @@ import React, { ReactElement, ReactNode } from 'react';
 import { StoredVirtualNodeProps } from './base';
 import {
     StoredVirtualCdataSectionProps,
+    StoredVirtualCommentProps,
     StoredVirtualDoctypeProps,
     StoredVirtualDocumentProps,
     StoredVirtualElementProps,
     StoredVirtualTextProps,
     VirtualCdataSection,
+    VirtualComment,
     VirtualDoctype,
     VirtualDocument,
     VirtualElement,
     VirtualText
 } from './components';
-import {
-    StoredVirtualCommentProps,
-    VirtualComment
-} from './components/comment';
 
 export type NodeState = { [id: string]: StoredVirtualNodeProps };
 
@@ -164,7 +162,7 @@ function renderDoctype(
 }
 
 export function ChildManager(props: Readonly<ChildManagerProps>) {
-    let node = props.nodes[props.id];
+    const node = props.nodes[props.id];
 
     switch (node.nodeType) {
         case Node.ELEMENT_NODE: {

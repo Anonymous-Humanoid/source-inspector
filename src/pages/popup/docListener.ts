@@ -4,8 +4,6 @@ import {
     ConnectMsg,
     PopupMsg,
     RemoveMsg,
-    UpdateCdataSectionMsg,
-    UpdateCommentMsg,
     UpdateDoctypeMsg,
     UpdateDocumentMsg,
     UpdateElementMsg,
@@ -56,7 +54,7 @@ type KnownNode =
  * circumventing debugger detection.
  */
 (async () => {
-    const ADD_NODE_IMPLS = new Set<number>([
+    const ADD_NODE_IMPLS = new Set<Readonly<number>>([
         Node['ELEMENT_NODE'],
         // Node['ATTRIBUTE_NODE'],
         Node['TEXT_NODE'],
@@ -77,16 +75,16 @@ type KnownNode =
     ]);
     let _connection: chrome.runtime.Port | undefined;
     let _observer: MutationObserver | undefined;
-    let _elementMap = new WeakMap<Node, string>();
+    const _elementMap = new WeakMap<Node, string>();
     let _initialDomConstructed = false;
-    let _mutationCache = new Array<PartialMutationRecord>();
+    const _mutationCache = new Array<PartialMutationRecord>();
     let _asyncIndex = 0;
 
     /**
      * Passes a message to the popup without waiting for a response.
      * @param msg The message to send
      */
-    function _sendMessage(msg: ConnectMsg | PopupMsg): void {
+    function _sendMessage(msg: Readonly<ConnectMsg | PopupMsg>): void {
         _connection?.postMessage(msg);
     }
 
@@ -96,10 +94,10 @@ type KnownNode =
      * @param node The node
      * @returns The node's unique id
      */
-    function _getId(node?: null): never;
-    function _getId(node: Node): string;
-    function _getId(node?: Node | null): string;
-    function _getId(node?: Node | null): string {
+    function _getId(node?: Readonly<null | undefined>): never;
+    function _getId(node: Readonly<Node>): string;
+    function _getId(node?: Readonly<Node | null | undefined>): string;
+    function _getId(node?: Readonly<Node | null | undefined>): string {
         // Handling runtime bugs
         if (node == null) {
             throw new Error('Node anomaly: node is nullish');
@@ -118,7 +116,7 @@ type KnownNode =
     }
 
     function _characterDataHandler(
-        mutation: PartialCharacterDataMutationRecord
+        mutation: Readonly<PartialCharacterDataMutationRecord>
     ): void {
         const id = _getId(mutation.target);
 
@@ -126,14 +124,16 @@ type KnownNode =
     }
 
     function _attributesHandler(
-        mutation: PartialAttributeMutationRecord
+        mutation: Readonly<PartialAttributeMutationRecord>
     ): void {
         const id = _getId(mutation.target);
 
         console.error(`Attribute mutation on node ${id}:`, mutation);
     }
 
-    function _removedNodesHandler(mutation: PartialNodeMutationRecord): void {
+    function _removedNodesHandler(
+        mutation: Readonly<PartialNodeMutationRecord>
+    ): void {
         for (const node of mutation.removedNodes) {
             if (_elementMap.has(node)) {
                 const id = _elementMap.get(node) as string;
@@ -152,7 +152,10 @@ type KnownNode =
         }
     }
 
-    function _addNode(node: Node, parentNode?: Node | null): void {
+    function _addNode(
+        node: Readonly<Node>,
+        parentNode?: Readonly<Node | null | undefined>
+    ): void {
         const id = _getId(node);
 
         if (!ADD_NODE_IMPLS.has(node.nodeType)) {
@@ -250,15 +253,17 @@ type KnownNode =
         }
     }
 
-    function _addedNodesHandler(mutation: PartialNodeMutationRecord): void {
-        for (let node of mutation.addedNodes) {
+    function _addedNodesHandler(
+        mutation: Readonly<PartialNodeMutationRecord>
+    ): void {
+        for (const node of mutation.addedNodes) {
             _addNode(node, mutation.target);
         }
     }
 
     function _tryFlushingCache(): void {
         if (_initialDomConstructed) {
-            for (let mutation of _mutationCache) {
+            for (const mutation of _mutationCache) {
                 switch (mutation.type) {
                     case 'childList': {
                         _addedNodesHandler(mutation);
@@ -278,8 +283,10 @@ type KnownNode =
         }
     }
 
-    function _mutationsHandler(mutations: PartialMutationRecord[]): void {
-        for (let mutation of mutations) {
+    function _mutationsHandler(
+        mutations: Readonly<PartialMutationRecord[]>
+    ): void {
+        for (const mutation of mutations) {
             _mutationCache.push(mutation);
         }
 
@@ -287,7 +294,7 @@ type KnownNode =
     }
 
     function _pushInitialDom(): void {
-        let iter = document.createNodeIterator(document);
+        const iter = document.createNodeIterator(document);
         let node: Node | null;
 
         while ((node = iter.nextNode()) != null) {

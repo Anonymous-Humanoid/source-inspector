@@ -29,7 +29,7 @@ export async function testInjectionUri(uri: string): Promise<boolean> {
  * @returns The last active tab ID
  */
 export async function getActiveTabId(): Promise<number | undefined> {
-    let [tab] = await chrome.tabs.query({
+    const [tab] = await chrome.tabs.query({
         active: true,
         lastFocusedWindow: true
     });

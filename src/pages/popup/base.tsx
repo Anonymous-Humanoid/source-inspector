@@ -19,11 +19,11 @@ export interface VirtualNodeProps
 }
 
 export function VirtualNode(props: Readonly<VirtualNodeProps>) {
-    let attrs =
+    const attrs =
         props.attributes == null
             ? ''
             : Object.entries(props.attributes).map(([name, value]) => {
-                  let id = `${props.id}-attr-${name}`;
+                  const id = `${props.id}-attr-${name}`;
 
                   return (
                       <VirtualAttribute
