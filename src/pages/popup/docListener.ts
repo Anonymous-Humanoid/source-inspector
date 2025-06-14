@@ -1,13 +1,14 @@
-import { Mutex, MutexInterface } from 'async-mutex';
 import { v4 as uuid } from 'uuid';
+import { TIMEOUT_MS } from './background';
 import {
+    ConnectMsg,
     PopupMsg,
-    ReceivedMsg,
     RemoveMsg,
-    UpdateCommentMsg,
     UpdateDoctypeMsg,
     UpdateDocumentMsg,
-    UpdateElementMsg
+    UpdateElementMsg,
+    UpdateMsg,
+    UpdateTextMsg
 } from './msgs';
 
 interface PartialNodeMutationRecord {
@@ -33,67 +34,58 @@ type PartialMutationRecord =
     | PartialAttributeMutationRecord
     | PartialCharacterDataMutationRecord;
 
+type KnownNode =
+    | Element
+    | Attr
+    | Text
+    | CDATASection
+    | EntityReference
+    | Entity
+    | ProcessingInstruction
+    | Comment
+    | Document
+    | DocumentType
+    | DocumentFragment
+    | NotationNode;
+
 /**
- * A document source inspector. Communicates document
+ * The document source inspector. Communicates document
  * updates to a popup without invoking DevTools, thereby
- * circumventing most site interference detection
+ * circumventing debugger detection.
  */
 (async () => {
-    const msgMutex = new Mutex();
+    const ADD_NODE_IMPLS = new Set<Readonly<number>>([
+        Node['ELEMENT_NODE'],
+        // Node['ATTRIBUTE_NODE'],
+        Node['TEXT_NODE'],
+        Node['CDATA_SECTION_NODE'],
 
-    let _mutexRelease: MutexInterface.Releaser | undefined;
+        // See: NodeFilter and https://stackoverflow.com/a/36379751
+        // Node['ENTITY_REFERENCE_NODE'],
+        // Node['ENTITY_NODE'],
+        // Node['NOTATION_NODE'],
+
+        // Node['PROCESSING_INSTRUCTION_NODE'],
+        Node['COMMENT_NODE'],
+        Node['DOCUMENT_NODE'],
+        Node['DOCUMENT_TYPE_NODE']
+
+        // Should never encounter
+        // Node['DOCUMENT_FRAGMENT_NODE'],
+    ]);
     let _connection: chrome.runtime.Port | undefined;
     let _observer: MutationObserver | undefined;
-    let _elementMap = new WeakMap<Node, string>();
+    const _elementMap = new WeakMap<Node, string>();
     let _initialDomConstructed = false;
-    let _mutationCache = new Array<PartialMutationRecord>();
+    const _mutationCache = new Array<PartialMutationRecord>();
+    let _asyncIndex = 0;
 
     /**
-     * Acquires the messaging mutex, forcing synchronous
-     * messaging in an otherwise asynchronous context.
-     */
-    async function _acquireMsgMutex() {
-        _mutexRelease = await msgMutex.acquire();
-    }
-
-    /**
-     * Releases the messaging mutex,
-     * allowing synchronous messaging to continue.
-     * An error will be thrown if this function is
-     * called while the mutex is already released.
-     */
-    async function _releaseMsgMutex() {
-        if (_mutexRelease == null) {
-            console.warn('Messaging mutex already released');
-
-            return;
-        }
-
-        _mutexRelease();
-
-        _mutexRelease = undefined;
-    }
-
-    /**
-     * Sends a message synchronously by acquiring the messaging mutex
+     * Passes a message to the popup without waiting for a response.
      * @param msg The message to send
      */
-    async function _sendMessage(msg: PopupMsg): Promise<void> {
-        await _acquireMsgMutex();
-
+    function _sendMessage(msg: Readonly<ConnectMsg | PopupMsg>): void {
         _connection?.postMessage(msg);
-    }
-
-    /**
-     * Releases the messaging mutex, allowing synchronous messaging to continue
-     * @param msg The ACK message
-     */
-    function _messageReceived(msg: ReceivedMsg): void {
-        if (msg.type === 'received') {
-            _releaseMsgMutex();
-        } else {
-            console.error('Unknown message received:', msg);
-        }
     }
 
     /**
@@ -102,7 +94,10 @@ type PartialMutationRecord =
      * @param node The node
      * @returns The node's unique id
      */
-    function _getId(node: Node): string {
+    function _getId(node?: Readonly<null | undefined>): never;
+    function _getId(node: Readonly<Node>): string;
+    function _getId(node?: Readonly<Node | null | undefined>): string;
+    function _getId(node?: Readonly<Node | null | undefined>): string {
         // Handling runtime bugs
         if (node == null) {
             throw new Error('Node anomaly: node is nullish');
@@ -112,7 +107,7 @@ type PartialMutationRecord =
         if (_elementMap.has(node)) {
             return _elementMap.get(node)!;
         } else {
-            let id = uuid();
+            const id = uuid();
 
             _elementMap.set(node, id);
 
@@ -121,147 +116,154 @@ type PartialMutationRecord =
     }
 
     function _characterDataHandler(
-        mutation: PartialCharacterDataMutationRecord
-    ) {
-        let id = _getId(mutation.target);
+        mutation: Readonly<PartialCharacterDataMutationRecord>
+    ): void {
+        const id = _getId(mutation.target);
 
-        // TODO TESTING
         console.error(`Character data mutation on node ${id}:`, mutation);
     }
 
-    function _attributesHandler(mutation: PartialAttributeMutationRecord) {
-        let id = _getId(mutation.target);
+    function _attributesHandler(
+        mutation: Readonly<PartialAttributeMutationRecord>
+    ): void {
+        const id = _getId(mutation.target);
 
-        // TODO TESTING
         console.error(`Attribute mutation on node ${id}:`, mutation);
     }
 
-    function _removedNodesHandler(mutation: PartialNodeMutationRecord) {
-        for (let node of mutation.removedNodes) {
+    function _removedNodesHandler(
+        mutation: Readonly<PartialNodeMutationRecord>
+    ): void {
+        for (const node of mutation.removedNodes) {
             if (_elementMap.has(node)) {
-                let id = _elementMap.get(node) as string;
-                let msg: RemoveMsg = {
+                const id = _elementMap.get(node) as string;
+                const msg: RemoveMsg = {
                     type: 'remove',
-                    id
+                    id,
+                    asyncIndex: _asyncIndex++
                 };
 
                 _sendMessage(msg);
             } else {
                 console.info('Ignoring anomalous node removal:', node);
+            }
 
-                _elementMap.delete(node);
+            _elementMap.delete(node);
+        }
+    }
+
+    function _addNode(
+        node: Readonly<Node>,
+        parentNode?: Readonly<Node | null | undefined>
+    ): void {
+        const id = _getId(node);
+
+        if (!ADD_NODE_IMPLS.has(node.nodeType)) {
+            console.error(
+                `Unimplemented node type ${node.nodeType} not added; ` +
+                    `any anomalous parent updates associated with id ` +
+                    `${id} are a result of this.`,
+                node
+            );
+            return;
+        }
+
+        const cNode = node as KnownNode;
+        const prevSiblingId =
+            cNode.previousSibling == null
+                ? undefined
+                : _getId(cNode.previousSibling);
+
+        switch (cNode.nodeType) {
+            case Node.ELEMENT_NODE: {
+                const parentId = _getId(parentNode);
+                const msg: UpdateElementMsg | UpdateTextMsg = {
+                    type: 'update',
+                    asyncIndex: _asyncIndex++,
+                    id,
+                    parentId,
+                    prevSiblingId,
+                    attributes: {},
+                    nodeType: cNode.nodeType,
+                    nodeName: cNode.nodeName,
+                    nodeValue: cNode.nodeValue
+                };
+
+                _sendMessage(msg);
+                break;
+            }
+            case Node.DOCUMENT_NODE: {
+                const parentId =
+                    parentNode == null ? undefined : _getId(parentNode);
+                const msg: UpdateDocumentMsg = {
+                    type: 'update',
+                    asyncIndex: _asyncIndex++,
+                    id,
+                    parentId,
+                    attributes: {},
+                    nodeType: cNode.nodeType,
+                    nodeName: cNode.nodeName,
+                    nodeValue: cNode.nodeValue,
+                    documentURI: cNode.documentURI
+                };
+
+                _sendMessage(msg);
+                return;
+            }
+            case Node.DOCUMENT_TYPE_NODE: {
+                const parentId = _getId(parentNode);
+                const msg: UpdateDoctypeMsg = {
+                    type: 'update',
+                    asyncIndex: _asyncIndex++,
+                    id,
+                    parentId,
+                    prevSiblingId,
+                    attributes: {},
+                    nodeType: cNode.nodeType,
+                    nodeName: cNode.nodeName,
+                    nodeValue: cNode.nodeValue,
+                    publicId: cNode.publicId,
+                    systemId: cNode.systemId
+                };
+
+                _sendMessage(msg);
+                break;
+            }
+            case Node.TEXT_NODE:
+            case Node.CDATA_SECTION_NODE:
+            case Node.COMMENT_NODE: {
+                // Setting nodeValue to null actually sets it to an empty string
+                const nodeValue = cNode.nodeValue ?? '';
+                const parentId = _getId(parentNode);
+                const msg = {
+                    type: 'update',
+                    asyncIndex: _asyncIndex++,
+                    id,
+                    parentId,
+                    prevSiblingId,
+                    attributes: {},
+                    nodeType: cNode.nodeType,
+                    nodeName: cNode.nodeName,
+                    nodeValue
+                } as UpdateMsg;
+
+                _sendMessage(msg);
+                break;
             }
         }
     }
 
-    function _addedNodesHandler(mutation: PartialNodeMutationRecord) {
-        for (let node of mutation.addedNodes) {
-            let id = _getId(node);
-
-            switch (node.nodeType) {
-                case Node.ELEMENT_NODE: {
-                    let parentId = _getId(mutation.target!);
-                    let prevSiblingId =
-                        node.previousSibling == null
-                            ? undefined
-                            : _getId(node.previousSibling);
-                    let msg: UpdateElementMsg = {
-                        type: 'update',
-                        id,
-                        parentId,
-                        nodeType: node.nodeType,
-                        nodeName: node.nodeName,
-                        nodeValue: null,
-                        prevSiblingId
-                    };
-
-                    _sendMessage(msg);
-                    break;
-                }
-                case Node.COMMENT_NODE: {
-                    let parentId = _getId(mutation.target!);
-                    let prevSiblingId =
-                        node.previousSibling == null
-                            ? undefined
-                            : _getId(node.previousSibling);
-                    let msg: UpdateCommentMsg = {
-                        type: 'update',
-                        id,
-                        parentId,
-                        nodeType: node.nodeType,
-                        nodeName: node.nodeName,
-                        nodeValue: node.nodeValue!,
-                        prevSiblingId
-                    };
-
-                    _sendMessage(msg);
-                    break;
-                }
-                case Node.DOCUMENT_NODE: {
-                    let parentId =
-                        mutation.target == null
-                            ? undefined
-                            : _getId(mutation.target);
-                    let doc = node as Document;
-                    let msg: UpdateDocumentMsg = {
-                        type: 'update',
-                        id,
-                        nodeType: node.nodeType,
-                        nodeName: '#document',
-                        nodeValue: null,
-                        attributes: {},
-                        documentURI: doc.documentURI,
-                        parentId // TODO Test document parentId
-                    };
-
-                    _sendMessage(msg);
-                    break;
-                }
-                case Node.DOCUMENT_TYPE_NODE: {
-                    let doctype = node as DocumentType;
-                    let parentId = _getId(mutation.target!);
-                    let prevSiblingId =
-                        node.previousSibling == null
-                            ? undefined
-                            : _getId(node.previousSibling);
-                    let msg: UpdateDoctypeMsg = {
-                        type: 'update',
-                        id,
-                        nodeType: node.nodeType,
-                        nodeName: doctype.nodeName,
-                        nodeValue: null,
-                        attributes: {},
-                        publicId: doctype.publicId,
-                        systemId: doctype.systemId,
-                        parentId,
-                        prevSiblingId
-                    };
-
-                    _sendMessage(msg);
-                    break;
-                }
-                case Node.ATTRIBUTE_NODE:
-                case Node.TEXT_NODE:
-                case Node.CDATA_SECTION_NODE:
-                case Node.ENTITY_REFERENCE_NODE:
-                case Node.ENTITY_NODE:
-                case Node.PROCESSING_INSTRUCTION_NODE:
-                case Node.DOCUMENT_FRAGMENT_NODE:
-                case Node.NOTATION_NODE:
-                default: {
-                    console.error(
-                        `Unimplemented node type ${node.nodeType} added:`,
-                        node
-                    );
-                    break;
-                }
-            }
+    function _addedNodesHandler(
+        mutation: Readonly<PartialNodeMutationRecord>
+    ): void {
+        for (const node of mutation.addedNodes) {
+            _addNode(node, mutation.target);
         }
     }
 
-    function _tryFlushingCache() {
+    function _tryFlushingCache(): void {
         if (_initialDomConstructed) {
-            for (let mutation of _mutationCache) {
+            for (const mutation of _mutationCache) {
                 switch (mutation.type) {
                     case 'childList': {
                         _addedNodesHandler(mutation);
@@ -281,16 +283,18 @@ type PartialMutationRecord =
         }
     }
 
-    function _mutationsHandler(mutations: PartialMutationRecord[]) {
-        for (let mutation of mutations) {
+    function _mutationsHandler(
+        mutations: Readonly<PartialMutationRecord[]>
+    ): void {
+        for (const mutation of mutations) {
             _mutationCache.push(mutation);
         }
 
         _tryFlushingCache();
     }
 
-    function _pushInitialDom() {
-        let iter = document.createNodeIterator(document);
+    function _pushInitialDom(): void {
+        const iter = document.createNodeIterator(document);
         let node: Node | null;
 
         while ((node = iter.nextNode()) != null) {
@@ -314,7 +318,7 @@ type PartialMutationRecord =
     /**
      * Disconnects the DOM observer
      */
-    function _disconnectObserver() {
+    function _disconnectObserver(): void {
         _observer?.disconnect();
 
         _observer = undefined;
@@ -323,9 +327,8 @@ type PartialMutationRecord =
     /**
      * Disconnects the popup connection
      */
-    function _disconnectConnection() {
+    function _disconnectConnection(): void {
         _connection?.onDisconnect.removeListener(_disconnect);
-        _connection?.onMessage.removeListener(_messageReceived);
         _connection?.disconnect();
 
         _connection = undefined;
@@ -348,7 +351,7 @@ type PartialMutationRecord =
      * Disconnects from the background worker,
      * preventing new connections from being established
      */
-    function _disconnectBackground() {
+    function _disconnectBackground(): void {
         chrome.runtime.onConnect.removeListener(_onConnect);
     }
 
@@ -365,19 +368,17 @@ type PartialMutationRecord =
         _disconnectBackground();
         window.addEventListener('beforeunload', _disconnect);
         _connection.onDisconnect.addListener(_disconnect);
-        _connection.onMessage.addListener(_messageReceived);
 
         // Observing DOM for changes
         _observer = new MutationObserver(_mutationsHandler);
 
-        // TODO Revisit if these attributes are still needed after completion
         _observer.observe(document, {
             childList: true,
             subtree: true,
             attributes: true,
-            characterData: true,
-            attributeOldValue: true,
-            characterDataOldValue: true
+            characterData: true
+            // attributeOldValue: true,
+            // characterDataOldValue: true
         });
 
         // Pushing initial DOM and blocking mutations, then pushing any mutations
@@ -393,13 +394,10 @@ type PartialMutationRecord =
     function _connect(): void {
         // Notifying background we're ready to connect
         chrome.runtime.onConnect.addListener(_onConnect);
-        chrome.runtime.sendMessage({});
+        chrome.runtime.sendMessage({} as any);
         console.log('Tab ready to connect!');
 
         // Removing listener after fixed timeout
-        // NOTE: Equivalent to background timeout (5s)
-        const TIMEOUT_MS = 5_000;
-
         setTimeout(_disconnectBackground, TIMEOUT_MS);
     }
 
