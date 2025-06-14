@@ -18,24 +18,9 @@ export async function testInjectionUri(uri: string): Promise<boolean> {
         return true;
     }
 
-    // Not possible to detect if a page is our own extension without external messaging
+    // Not possible to detect if a page is our own
+    // extension without external messaging
     // Manifest requirements: "optional_permissions": [ "tabs", "management" ]
-    /*
-    return await new Promise((resolve: (granted: boolean) => void) => {
-        // Extra permissions necessary for injecting into extensions, including itself
-        chrome.permissions.contains({ permissions: ['management'] }, (granted) => {
-            // TODO TESTING
-            console.log(granted);
-
-            if (granted) {
-                resolve(new RegExp(`^(?:https://?|chrome-extension://${chrome.runtime.id}/)`, 'i').test(uri));
-            }
-            else {
-                resolve(/^https?:\/\//i.test(uri));
-            }
-        });
-    });
-    */
     return /^https?:\/\//i.test(uri);
 }
 
@@ -44,7 +29,7 @@ export async function testInjectionUri(uri: string): Promise<boolean> {
  * @returns The last active tab ID
  */
 export async function getActiveTabId(): Promise<number | undefined> {
-    let [tab] = await chrome.tabs.query({
+    const [tab] = await chrome.tabs.query({
         active: true,
         lastFocusedWindow: true
     });

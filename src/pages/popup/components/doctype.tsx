@@ -7,7 +7,7 @@ interface SharedValues {
     nodeType: Node['DOCUMENT_TYPE_NODE'];
     nodeName: string;
     nodeValue: null;
-    attributes: {};
+    attributes: Record<string, never>;
     publicId: string;
     systemId: string;
     children?: never[];
@@ -15,14 +15,15 @@ interface SharedValues {
 
 export type UpdateDoctypeMsg = BaseUpdateMsg & SharedValues;
 
-export type StoredVirtualDoctypeProps = StoredVirtualNodeProps & SharedValues;
+export type StoredVirtualDoctypeProps = StoredVirtualNodeProps &
+    SharedValues & { childNodeIds: never[] };
 
 export type VirtualDoctypeProps = NonStoredProps<StoredVirtualDoctypeProps>;
 
 export function VirtualDoctype(props: Readonly<VirtualDoctypeProps>) {
     let xmlId = '';
 
-    if (props.publicId === '') {
+    if (props.publicId !== '') {
         xmlId += ` PUBLIC "${props.publicId}"`;
 
         if (props.systemId === '') {

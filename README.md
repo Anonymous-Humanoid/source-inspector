@@ -23,10 +23,11 @@ rendered in HTML or XHTML.
 
 This extension does not record any data. In the future, we plan to possibly add
 an options menu. This will be the extent of data collected, (i.e, yes/no), and
-it will not be sent or broadcast anywhere. We also do not colect browser
+it will not be sent or broadcast anywhere. We also do not collect browser
 history. We will **never** share any data with anyone, not even ourselves.
 We believe that open source comprises source transparency and user privacy.
-Your data is yours and yours alone, and we plan to keep it that way.
+Your data is yours and yours alone, and we plan to keep it that way. Plus,
+this is an extension intended for offline use.
 
 For more technical readers with a knowledge of browser extensions, the manifest
 file shows the following:
@@ -47,37 +48,103 @@ There are also some additional security features we have implemented:
 
 - Content scripts are injected in an isolated world and never modify the DOM.
   This prevents detection while still allowing access to the DOM.
-<!--
+- Instead of EC6 classes, we use nested functions to create truly
+  private methods in our content script. I.e:
+
+  ```ts
+  (async () => {
+    function _privateMethod() {
+      // Super secret internals
+    }
+
+    function publicMethod() {
+      // Public API
+    }
+
+    return {
+      publicMethod
+    };
+  })();
+  ```
+
+  <!--
+
+
 - All messages are validated to ensure that no part of the extension has been
   [compromised](https://chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/security/compromised-renderers.md#Messaging).
--->
+  -->
 
-Finally, for transparency's sake, yes, the initial commit added *a lot*. That's
+Finally, for transparency's sake, yes, the initial commit added _a lot_. That's
 because this project had been in the works for a while. This was a rich
-opportunity to learn about React and more technical (X)HTML, such as CDATA
-sections. And in learning about React through this project, it was done over a
-few times to get the nesting of diverse component states functional and
-implemented to reasonable coding standards.
+opportunity to learn about React and more technical (X)HTML.
+And in learning about React through this project, there were a few migrations
+to get the nesting of diverse component states functional and implemented to
+reasonable and modern coding standards.
+
+## Building
+
+In order to use this extension, you must first build it from source.
+
+- Download the source code
+- Open your IDE or terminal to the root of the project
+- Run `npm install` to install dependencies
+- To build the extension, start a development server:
+  - For users, run `npm run start:prod` to run in production mode (port 8081).
+    This will create a folder `dist` containing the built extension.
+  - For developers, run `npm run start:dev` or `npm start`
+    to run in development mode (port 8080). They are equivalent.
+    This will create a folder `build` containing the built extension.
+- Optionally, when the server says that webpack has compiled successfully,
+  you can stop the server. (Ctrl+C, or Command+C on Mac)
+  It's only necessary to keep it running if you plan on making changes
+  to the source code and having them be patched in live. Though, in
+  Chromium-based browsers, you will still be required to reload the extension
+  manually, as there is no way to perform this automatically.
+  <!-- Dev note:
+  It might be possible if the server also managed a browser process that it
+  could close and reopen, however this is far outside the scope of this
+  project, and it's only necessary for testing, not installation.
+  Too technical, too little gains. Perhaps someone could make a
+  proof-of-concept Chromium extension testing boilerplate.
+  -->
+
+You now have an installable extension.
 
 ## Installing
 
 This extension is not available on any browser web store, such as the Chrome
-or Firefox web store.
+or Firefox web store. It's recommended that you pin the extension after
+installation for quick and easy access, but it's not required.
+
+### Chromium (Chrome, Edge, etc)
+
+- In the address bar, type `chrome://extensions` and hit enter
+- If it's not already enabled, click the `Developer mode` toggle
+- Click the `Load unpacked` button
+- Select the built extension folder
+
+<!--
+### Firefox (Firefox, Tor, etc)
+
+- In the address bar, type `about:addons` and hit enter
+- If it's not already enabled, click the `Developer mode` toggle
+- Click the `Load Temporary Add-on` button
+- Select the built extension folder
+-->
 
 ## Changing Permissions
 
-Either:
-
 - Right click the extension icon in the extension toolbar
-- Click "Manage extension"
+- Click `Manage extension`
+- Find the extension and click `Details`
 
-or
+This is the extension details page.
+From here, you can toggle the extension's permissions to:
 
-- In the address bar, type `chrome://extensions` and hit enter
-- Look for this extension and click `Details`
+- Run in incognito/private mode
+- Run in local files (i.e, `file://`)
 
-This is the extension details page. From here, you can toggle the extension's
-permissions to run in incognito.
+and possibly more, depending on your browser.
 
 ## How It Works
 
@@ -138,7 +205,7 @@ For a list of known issues and planned features, see the [TODOs](TODO.md)
 
 - My own [extension boilerplate](https://github.com/Anonymous-Humanoid/chromium-extension-boilerplate)
 - [Code review icons](https://www.flaticon.com/free-icons/code-review) created
-by Freepik - Flaticon
+  by Freepik - Flaticon
 
 [license-image]: https://img.shields.io/npm/l/markdownlint.svg
 [license-url]: https://opensource.org/licenses/MIT
