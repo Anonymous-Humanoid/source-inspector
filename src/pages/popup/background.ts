@@ -1,9 +1,10 @@
 import { testInjectionUri } from '../shared/background';
 import { ConnectMsg } from './msgs';
 
-class Popup {
-    static readonly #TIMEOUT_MS = 5_000;
+// Shared exports
+export const TIMEOUT_MS = 5_000;
 
+class Popup {
     #popupId: number | undefined;
     #tabId: number | undefined;
 
@@ -11,7 +12,7 @@ class Popup {
         if (this.#popupId != null && this.#tabId != null) {
             console.log('Connecting popup to tab');
 
-            let msg: ConnectMsg = {
+            const msg: ConnectMsg = {
                 type: 'connection',
                 tabId: this.#tabId
             };
@@ -31,8 +32,8 @@ class Popup {
 
         // Waiting for document listener to initialize
         async function MSG_BROKER(
-            msg: {},
-            sender: chrome.runtime.MessageSender
+            _msg: Readonly<any>,
+            sender: Readonly<chrome.runtime.MessageSender>
         ): Promise<void> {
             if (sender.id === chrome.runtime.id && sender.tab?.id === tabId) {
                 chrome.runtime.onMessage.removeListener(MSG_BROKER);
@@ -51,9 +52,9 @@ class Popup {
             chrome.runtime.onMessage.removeListener(MSG_BROKER);
 
             console.error(
-                `Tab ${tabId} failed to connect within ${Popup.#TIMEOUT_MS}ms`
+                `Tab ${tabId} failed to connect within ${TIMEOUT_MS}ms`
             );
-        }, Popup.#TIMEOUT_MS);
+        }, TIMEOUT_MS);
 
         chrome.runtime.onMessage.addListener(MSG_BROKER);
 
@@ -80,8 +81,8 @@ class Popup {
 
         // Waiting for popup to initialize
         async function MSG_BROKER(
-            msg: {},
-            sender: chrome.runtime.MessageSender
+            _msg: Readonly<any>,
+            sender: Readonly<chrome.runtime.MessageSender>
         ): Promise<void> {
             if (
                 sender.id === chrome.runtime.id &&
@@ -101,21 +102,20 @@ class Popup {
         chrome.runtime.onMessage.addListener(MSG_BROKER);
 
         // Opening popup (requires extension split to run in incognito)
-        let popup = await chrome.tabs.create({
-            url: chrome.runtime.getURL('popup/index.html')
+        const popup = await chrome.windows.create({
+            url: chrome.runtime.getURL('popup/index.html'),
+            type: 'popup'
         });
-        const POPUP_ID = popup.id!;
+        const POPUP_ID = popup.tabs![0].id!;
 
         // Ensuring garbage collection after fixed timeout
         const TIMEOUT = setTimeout(() => {
             chrome.runtime.onMessage.removeListener(MSG_BROKER);
 
             console.error(
-                `Popup ${POPUP_ID} failed to connect within ${
-                    Popup.#TIMEOUT_MS
-                }ms`
+                `Popup ${POPUP_ID} failed to connect within ${TIMEOUT_MS}ms`
             );
-        }, Popup.#TIMEOUT_MS);
+        }, TIMEOUT_MS);
     }
 
     /**
@@ -128,7 +128,7 @@ class Popup {
             tab.url != null &&
             (await testInjectionUri(tab.url))
         ) {
-            let popup = new Popup();
+            const popup = new Popup();
 
             popup.#initializePopupBroker();
             popup.#initializeTabBroker(tab.id);
