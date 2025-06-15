@@ -48,7 +48,7 @@ There are also some additional security features we have implemented:
 
 - Content scripts are injected in an isolated world and never modify the DOM.
   This prevents detection while still allowing access to the DOM.
-- Instead of EC6 classes, we use nested functions to create truly
+- Instead of ES6 classes, we use nested functions to create truly
   private methods in our content script. I.e:
 
   ```ts
@@ -67,12 +67,10 @@ There are also some additional security features we have implemented:
   })();
   ```
 
-  <!--
-
-
+<!--
 - All messages are validated to ensure that no part of the extension has been
   [compromised](https://chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/security/compromised-renderers.md#Messaging).
-  -->
+-->
 
 Finally, for transparency's sake, yes, the initial commit added _a lot_. That's
 because this project had been in the works for a while. This was a rich
