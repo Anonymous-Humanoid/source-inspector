@@ -4,33 +4,6 @@
 export const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
 /**
- * Raised when an assertion fails
- * @see {@link assert}
- */
-export class AssertionError extends Error {
-    /**
-     * @param msg The error message
-     */
-    constructor(msg?: Readonly<string | undefined>) {
-        super(msg ?? 'Assertion failed');
-    }
-}
-
-/**
- * Throws an {@link AssertionError} if the given expression is falsey
- * @param expr
- * @param msg
- */
-export function assert(
-    expr: Readonly<boolean>,
-    msg?: Readonly<string | undefined>
-): asserts expr is true {
-    if (!expr) {
-        throw new AssertionError(msg);
-    }
-}
-
-/**
  * Returns a promise that resolves when the given time has passed
  * @param sec The time to sleep in milliseconds
  */
