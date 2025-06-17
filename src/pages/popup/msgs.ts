@@ -1,4 +1,5 @@
 import {
+    UpdateAttributeMsg,
     UpdateCdataSectionMsg,
     UpdateCommentMsg,
     UpdateDoctypeMsg,
@@ -8,6 +9,7 @@ import {
 } from './components';
 
 export {
+    UpdateAttributeMsg,
     UpdateCdataSectionMsg,
     UpdateCommentMsg,
     UpdateDoctypeMsg,
@@ -35,7 +37,7 @@ export interface RemoveMsg extends Msg {
 
 export type UpdateMsg =
     | UpdateElementMsg
-    | UpdateAttributeNodeMsg
+    | UpdateAttributeMsg
     | UpdateTextMsg
     | UpdateCdataSectionMsg
     | UpdateEntityRefMsg
@@ -55,10 +57,6 @@ export interface BaseUpdateMsg extends Msg {
     nodeValue: string | null;
     parentId?: string | undefined;
     prevSiblingId?: string;
-}
-
-export interface UpdateAttributeNodeMsg extends BaseUpdateMsg {
-    nodeType: Node['ATTRIBUTE_NODE'];
 }
 
 export interface UpdateEntityRefMsg extends BaseUpdateMsg {

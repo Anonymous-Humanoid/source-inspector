@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ReactElement } from 'react';
 import { NonStoredProps, StoredVirtualNodeProps } from '../base';
 import { BaseUpdateMsg } from '../msgs';
 
@@ -7,7 +7,6 @@ interface SharedValues {
     nodeType: Node['CDATA_SECTION_NODE'];
     nodeName: '#cdata-section';
     nodeValue: string;
-    attributes: Record<string, never>;
     prevSiblingId?: string;
     children?: never[];
 }
@@ -20,9 +19,11 @@ export type StoredVirtualCdataSectionProps = StoredVirtualNodeProps &
 export type VirtualCdataSectionProps =
     NonStoredProps<StoredVirtualCdataSectionProps>;
 
-export function VirtualCdataSection(props: Readonly<VirtualCdataSectionProps>) {
+export function VirtualCdataSection(
+    props: Readonly<VirtualCdataSectionProps>
+): ReactElement {
     return (
-        <pre className='node' key={props.id}>
+        <pre className='node'>
             <p className='text'>{`<![CDATA[${props.nodeValue}]]>`}</p>
         </pre>
     );

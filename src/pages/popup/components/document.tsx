@@ -6,7 +6,6 @@ interface SharedValues {
     nodeType: Node['DOCUMENT_NODE'];
     nodeName: '#document';
     nodeValue: null;
-    attributes: Record<string, never>;
     prevSiblingId?: undefined;
     documentURI: string;
 }
@@ -21,7 +20,7 @@ export function VirtualDocument(props: VirtualDocumentProps): ReactElement {
     // For security, don't change the rel attribute
     // See: https://stackoverflow.com/a/17711167/8387760
     return (
-        <pre className='document node' key={props.id}>
+        <pre className='document node'>
             {`${props.nodeName} (`}
             <a
                 target='_blank'

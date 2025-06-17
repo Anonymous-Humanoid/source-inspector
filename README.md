@@ -53,11 +53,11 @@ There are also some additional security features we have implemented:
 
   ```ts
   (async () => {
-    function _privateMethod() {
+    function _privateMethod(): void {
       // Super secret internals
     }
 
-    function publicMethod() {
+    function publicMethod(): void {
       // Public API
     }
 
@@ -171,6 +171,10 @@ the page, such as with ad blocking.
 
 ## Caveats
 
+- We can't currently catch every attribute event. Because `MutationObserver`s
+  run at the microtask level, and because attribute `MutationRecord`s don't
+  include the new attribute value, we don't yet have a way to get the values
+  of attributes every time they're updated, only most times.
 - This extension is subject to the same restrictions as any extension. That
   means that protected URLs, such as `chrome://`, `edge://`,
   `chrome-extension://` and `about://`, cannot be inspected. Ironically, this

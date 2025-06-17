@@ -7,7 +7,6 @@ interface SharedValues {
     nodeType: Node['TEXT_NODE'];
     nodeName: '#text';
     nodeValue: string;
-    attributes: Record<string, never>;
     prevSiblingId?: string;
     children?: never[];
 }
@@ -26,11 +25,7 @@ export function VirtualText(props: Readonly<VirtualTextProps>): ReactElement {
     const hidden = props.nodeValue === '';
 
     return (
-        <div
-            key={props.id}
-            className={hidden ? undefined : 'node'}
-            hidden={hidden}
-        >
+        <div className={hidden ? undefined : 'node'} hidden={hidden}>
             <VirtualInlineText
                 parentId={props.id}
                 nodeValue={props.nodeValue}
@@ -39,6 +34,7 @@ export function VirtualText(props: Readonly<VirtualTextProps>): ReactElement {
     );
 }
 
+// Never persisted, so no ID is necessary
 export interface VirtualInlineTextProps {
     parentId: string;
     nodeValue: string;
@@ -50,13 +46,5 @@ export interface VirtualInlineTextProps {
 export function VirtualInlineText(
     props: Readonly<VirtualInlineTextProps>
 ): ReactElement {
-    return (
-        <div
-            className='text'
-            key={props.parentId}
-            id={`${props.parentId}-inline`}
-        >
-            {props.nodeValue}
-        </div>
-    );
+    return <div className='text'>{props.nodeValue}</div>;
 }

@@ -4,10 +4,12 @@ import {
     ConnectMsg,
     PopupMsg,
     RemoveMsg,
+    UpdateAttributeMsg,
+    UpdateCdataSectionMsg,
+    UpdateCommentMsg,
     UpdateDoctypeMsg,
     UpdateDocumentMsg,
     UpdateElementMsg,
-    UpdateMsg,
     UpdateTextMsg
 } from './msgs';
 
@@ -22,6 +24,7 @@ interface PartialNodeMutationRecord {
 interface PartialAttributeMutationRecord {
     readonly type: 'attributes';
     readonly target: Node;
+    readonly attributeName: string;
 }
 
 interface PartialCharacterDataMutationRecord {
@@ -54,31 +57,34 @@ type KnownNode =
  * circumventing debugger detection.
  */
 (async () => {
-    const ADD_NODE_IMPLS = new Set<Readonly<number>>([
+    const ADD_NODE_SUPPORTED_TYPES = new Set<Readonly<number>>([
         Node['ELEMENT_NODE'],
-        // Node['ATTRIBUTE_NODE'],
+        // Node['ATTRIBUTE_NODE'], // Should never encounter
         Node['TEXT_NODE'],
         Node['CDATA_SECTION_NODE'],
-
-        // See: NodeFilter and https://stackoverflow.com/a/36379751
-        // Node['ENTITY_REFERENCE_NODE'],
-        // Node['ENTITY_NODE'],
-        // Node['NOTATION_NODE'],
-
         // Node['PROCESSING_INSTRUCTION_NODE'],
         Node['COMMENT_NODE'],
         Node['DOCUMENT_NODE'],
         Node['DOCUMENT_TYPE_NODE']
+        // ,Node['DOCUMENT_FRAGMENT_NODE'] // Shadow root
 
-        // Should never encounter
-        // Node['DOCUMENT_FRAGMENT_NODE'],
+        // Should never be used
+        // For implementation, see: https://stackoverflow.com/a/36379751
+        // ,Node['ENTITY_REFERENCE_NODE']
+        // ,Node['ENTITY_NODE']
+        // ,Node['NOTATION_NODE']
     ]);
     let _connection: chrome.runtime.Port | undefined;
     let _observer: MutationObserver | undefined;
     const _elementMap = new WeakMap<Node, string>();
+    const _attrMap = new WeakMap<
+        Element,
+        Array<{ id: string; attrName: string }>
+    >();
     let _initialDomConstructed = false;
-    const _mutationCache = new Array<PartialMutationRecord>();
+    const _mutationCache = new Array<Readonly<PartialMutationRecord>>();
     let _asyncIndex = 0;
+    let msgCount = 0;
 
     /**
      * Passes a message to the popup without waiting for a response.
@@ -115,6 +121,51 @@ type KnownNode =
         }
     }
 
+    function _getAttrId(
+        ownerElement: Readonly<Element>,
+        attribute: Readonly<Attr | null>,
+        attributeName: Readonly<string>
+    ): string {
+        const attrName = attributeName.toLowerCase();
+
+        // Race condition: attribute may have since been modified
+        const attr = attribute ?? ownerElement.getAttributeNode(attrName);
+
+        if (!_attrMap.has(ownerElement)) {
+            _attrMap.set(ownerElement, []);
+        }
+
+        const elementAttrCaches = _attrMap.get(ownerElement)!;
+        let attrCache = elementAttrCaches.find(
+            (obj) => obj.attrName === attrName
+        );
+
+        if (attrCache == null) {
+            const id = _getId(attr!);
+            attrCache = { id, attrName };
+
+            elementAttrCaches.push(attrCache);
+
+            return id;
+        } else if (attr == null) {
+            return attrCache.id;
+        }
+
+        const id = _getId(attr);
+
+        attrCache = elementAttrCaches.find((obj) => obj.id === id);
+
+        if (attrCache == null) {
+            attrCache = { id, attrName };
+
+            elementAttrCaches.push(attrCache);
+        } else {
+            attrCache.attrName = attrName;
+        }
+
+        return attrCache.id;
+    }
+
     function _characterDataHandler(
         mutation: Readonly<PartialCharacterDataMutationRecord>
     ): void {
@@ -126,16 +177,57 @@ type KnownNode =
     function _attributesHandler(
         mutation: Readonly<PartialAttributeMutationRecord>
     ): void {
-        const id = _getId(mutation.target);
+        const ownerNode = mutation.target;
+        const attrName = mutation.attributeName;
+        const parentId = _getId(ownerNode);
 
-        console.error(`Attribute mutation on node ${id}:`, mutation);
+        if (ownerNode.nodeType !== Node.ELEMENT_NODE) {
+            console.error(
+                `Invalid attribute mutation on node of id ${parentId}:`,
+                ownerNode
+            );
+            return;
+        }
+
+        const ownerElement = ownerNode as Element;
+        const attr = ownerElement.getAttributeNode(attrName);
+        const id = _getAttrId(ownerElement, attr, attrName);
+        const msg: UpdateAttributeMsg = {
+            type: 'update',
+            asyncIndex: _asyncIndex++,
+            id,
+            parentId,
+            nodeType: Node.ATTRIBUTE_NODE,
+            nodeName: attrName.toLowerCase(),
+            nodeValue: attr?.nodeValue ?? null,
+            childNodeIds: []
+        };
+
+        _sendMessage(msg);
     }
 
     function _removedNodesHandler(
         mutation: Readonly<PartialNodeMutationRecord>
     ): void {
         for (const node of mutation.removedNodes) {
-            if (_elementMap.has(node)) {
+            if (node.nodeType === Node.ATTRIBUTE_NODE) {
+                // Should never happen
+                const attr = node as Attr;
+
+                console.warn(
+                    'Encountered attribute in node removal method:',
+                    attr
+                );
+
+                if (attr.ownerElement != null) {
+                    // Should always happen if we somehow get this far
+                    _attributesHandler({
+                        type: 'attributes',
+                        target: attr.ownerElement,
+                        attributeName: attr.nodeName
+                    });
+                }
+            } else if (_elementMap.has(node)) {
                 const id = _elementMap.get(node) as string;
                 const msg: RemoveMsg = {
                     type: 'remove',
@@ -147,8 +239,6 @@ type KnownNode =
             } else {
                 console.info('Ignoring anomalous node removal:', node);
             }
-
-            _elementMap.delete(node);
         }
     }
 
@@ -158,7 +248,7 @@ type KnownNode =
     ): void {
         const id = _getId(node);
 
-        if (!ADD_NODE_IMPLS.has(node.nodeType)) {
+        if (!ADD_NODE_SUPPORTED_TYPES.has(node.nodeType)) {
             console.error(
                 `Unimplemented node type ${node.nodeType} not added; ` +
                     `any anomalous parent updates associated with id ` +
@@ -183,7 +273,6 @@ type KnownNode =
                     id,
                     parentId,
                     prevSiblingId,
-                    attributes: {},
                     nodeType: cNode.nodeType,
                     nodeName: cNode.nodeName,
                     nodeValue: cNode.nodeValue
@@ -200,7 +289,6 @@ type KnownNode =
                     asyncIndex: _asyncIndex++,
                     id,
                     parentId,
-                    attributes: {},
                     nodeType: cNode.nodeType,
                     nodeName: cNode.nodeName,
                     nodeValue: cNode.nodeValue,
@@ -218,7 +306,6 @@ type KnownNode =
                     id,
                     parentId,
                     prevSiblingId,
-                    attributes: {},
                     nodeType: cNode.nodeType,
                     nodeName: cNode.nodeName,
                     nodeValue: cNode.nodeValue,
@@ -241,14 +328,20 @@ type KnownNode =
                     id,
                     parentId,
                     prevSiblingId,
-                    attributes: {},
                     nodeType: cNode.nodeType,
                     nodeName: cNode.nodeName,
                     nodeValue
-                } as UpdateMsg;
+                } as UpdateTextMsg | UpdateCdataSectionMsg | UpdateCommentMsg;
 
                 _sendMessage(msg);
                 break;
+            }
+            default: {
+                // Should never happen
+                console.error(
+                    `Skipping addition of unimplemented node ` +
+                        `of type ${node.nodeType}`
+                );
             }
         }
     }
@@ -306,10 +399,22 @@ type KnownNode =
                 previousSibling: null
             });
 
-            _attributesHandler({
-                type: 'attributes',
-                target: node
-            });
+            if (node.nodeType === Node.ELEMENT_NODE) {
+                const element = node as Element;
+
+                for (const attr of element.attributes) {
+                    _attributesHandler({
+                        type: 'attributes',
+                        target: element,
+                        attributeName: attr.nodeName
+                    });
+                }
+            }
+
+            // _characterDataHandler({
+            //     type: 'characterData',
+            //     target: node
+            // });
         }
 
         _initialDomConstructed = true;
@@ -370,14 +475,13 @@ type KnownNode =
         _connection.onDisconnect.addListener(_disconnect);
 
         // Observing DOM for changes
-        _observer = new MutationObserver(_mutationsHandler);
+        _observer = new MutationObserver(_mutationsHandler as MutationCallback);
 
         _observer.observe(document, {
             childList: true,
             subtree: true,
             attributes: true,
             characterData: true
-            // attributeOldValue: true,
             // characterDataOldValue: true
         });
 

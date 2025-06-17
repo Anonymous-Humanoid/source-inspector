@@ -8,6 +8,8 @@ declare global {
     // Extends existing type
     interface Attr {
         nodeType: Node['ATTRIBUTE_NODE'];
+        nodeValue: string;
+        previousSibling: null;
     }
 
     // Extends existing type

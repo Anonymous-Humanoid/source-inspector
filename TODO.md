@@ -7,9 +7,12 @@
 - Add dropdown functionality to all nodes with children
 - For accessibility purposes, add the ability
   to select and navigate between elements in the inspector
-- When elements are added, children should be processed
-- Fix adding nodes with previous node IDs, as they seem to be rendered
-  out of order when, e.g, removing a node in DevTools and undoing the action
+- When elements are added, children and text should be processed
+- Fix duplicate attribute names when adding a second or more attributes
+  to an element using DevTool's "Edit as HTML" function
+  (possible race condition)
+- Fix adding nodes with previous node IDs
+  (e.g, removing a node in DevTools and then undoing the action)
 - Render XML attributes in an XHTML document, e.g:
 
   ```xhtml
@@ -23,9 +26,6 @@
   [docs](https://chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/security/compromised-renderers.md#Messaging))
 - Tell the user when a protected page cannot be inspected
 - Add documentation where it's missing or necessary (e.g, @param or @returns)
-- Support attribute mutations
-  - Have attributes and text referenced through an ID in virtual nodes instead
-    of storing key-value pairs and regenerating keys by a fixed pattern
 - Support character data mutations
 - Finish supporting all applicable node types
   - Test nested document nodes (see: [SO](https://stackoverflow.com/questions/26010355/is-there-a-way-to-uniquely-identify-an-iframe-that-the-content-script-runs-in-fo))
@@ -34,6 +34,8 @@
 
 ## Technical Priorities
 
+- Add an [error boundary](https://react.dev/link/error-boundaries)
+  for improved debugging UX
 - StateManager needs to process multiple messages per render
   or defer rendering to avoid
   `Uncaught Error: Too many re-renders. React limits the number of renders`
@@ -59,8 +61,8 @@
 
 ## Future Priorities
 
-- Replace shared assert function with node:assert.assert
-- Remove redundant information from messages and props
+- Configure React source map generation
+  (`React.createElement` statements are ugly)
 - Create and add donation medium
 - Modify ESLint config:
 

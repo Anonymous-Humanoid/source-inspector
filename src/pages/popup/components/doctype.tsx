@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ReactElement } from 'react';
 import { NonStoredProps, StoredVirtualNodeProps } from '../base';
 import { BaseUpdateMsg } from '../msgs';
 
@@ -7,7 +7,6 @@ interface SharedValues {
     nodeType: Node['DOCUMENT_TYPE_NODE'];
     nodeName: string;
     nodeValue: null;
-    attributes: Record<string, never>;
     publicId: string;
     systemId: string;
     children?: never[];
@@ -20,7 +19,9 @@ export type StoredVirtualDoctypeProps = StoredVirtualNodeProps &
 
 export type VirtualDoctypeProps = NonStoredProps<StoredVirtualDoctypeProps>;
 
-export function VirtualDoctype(props: Readonly<VirtualDoctypeProps>) {
+export function VirtualDoctype(
+    props: Readonly<VirtualDoctypeProps>
+): ReactElement {
     let xmlId = '';
 
     if (props.publicId !== '') {
@@ -34,7 +35,7 @@ export function VirtualDoctype(props: Readonly<VirtualDoctypeProps>) {
     }
 
     return (
-        <pre className='doctype node' key={props.id}>
+        <pre className='doctype node'>
             {`<!DOCTYPE ${props.nodeName}${xmlId}>`}
         </pre>
     );
