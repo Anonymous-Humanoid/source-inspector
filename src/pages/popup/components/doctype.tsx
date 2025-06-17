@@ -26,8 +26,8 @@ export function VirtualDoctype(props: Readonly<VirtualDoctypeProps>) {
     if (props.publicId !== '') {
         xmlId += ` PUBLIC "${props.publicId}"`;
 
-        if (props.systemId === '') {
-            xmlId += ` ${props.systemId}`;
+        if (props.systemId !== '') {
+            xmlId += ` "${props.systemId}"`;
         }
     } else if (props.systemId !== '') {
         xmlId += ` SYSTEM "${props.systemId}"`;
