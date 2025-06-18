@@ -1,4 +1,4 @@
-import React, { ReactElement } from 'react';
+import React, { ReactNode } from 'react';
 import { NonStoredProps, StoredVirtualNodeProps } from '../base';
 import { BaseUpdateMsg } from '../msgs';
 
@@ -23,7 +23,7 @@ export type VirtualAttributeProps = NonStoredProps<StoredVirtualAttributeProps>;
  */
 export function VirtualAttribute(
     props: Readonly<VirtualAttributeProps>
-): ReactElement {
+): ReactNode {
     return (
         <>
             <div className='attr'>{' ' + props.nodeName}</div>

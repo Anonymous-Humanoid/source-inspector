@@ -1,4 +1,4 @@
-import React, { ReactElement } from 'react';
+import React, { ReactNode } from 'react';
 import { NonStoredProps, StoredVirtualNodeProps } from '../base';
 import { BaseUpdateMsg } from '../msgs';
 
@@ -21,22 +21,19 @@ export type VirtualTextProps = NonStoredProps<StoredVirtualTextProps>;
 /**
  * The document source block virtual text node component
  */
-export function VirtualText(props: Readonly<VirtualTextProps>): ReactElement {
+export function VirtualText(props: Readonly<VirtualTextProps>): ReactNode {
     const hidden = props.nodeValue === '';
 
     return (
         <div className={hidden ? undefined : 'node'} hidden={hidden}>
-            <VirtualInlineText
-                parentId={props.id}
-                nodeValue={props.nodeValue}
-            />
+            <VirtualInlineText nodeValue={props.nodeValue} />
         </div>
     );
 }
 
-// Never persisted, so no ID is necessary
+// Key is handled by parent, so no parent ID is necessary
+// Node is never persisted, so no ID is necessary
 export interface VirtualInlineTextProps {
-    parentId: string;
     nodeValue: string;
 }
 
@@ -45,6 +42,6 @@ export interface VirtualInlineTextProps {
  */
 export function VirtualInlineText(
     props: Readonly<VirtualInlineTextProps>
-): ReactElement {
-    return <div className='text'>{props.nodeValue}</div>;
+): ReactNode {
+    return <pre className='text'>{props.nodeValue}</pre>;
 }

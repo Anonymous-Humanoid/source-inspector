@@ -1,4 +1,4 @@
-import React, { ReactElement } from 'react';
+import React, { ReactNode } from 'react';
 import { NonStoredProps, StoredVirtualNodeProps } from '../base';
 import { BaseUpdateMsg } from '../msgs';
 
@@ -15,12 +15,12 @@ export type VirtualElementProps = NonStoredProps<StoredVirtualElementProps>;
 
 export function VirtualElement(
     props: Readonly<VirtualElementProps>
-): ReactElement {
+): ReactNode {
     // Parts of this component's rendering are handled by the child manager
     return (
-        <pre className='node'>
+        <div className='node'>
             {`<${props.nodeName}`}
             {props.children}
-        </pre>
+        </div>
     );
 }

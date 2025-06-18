@@ -13,11 +13,6 @@
   (possible race condition)
 - Fix adding nodes with previous node IDs
   (e.g, removing a node in DevTools and then undoing the action)
-- Render XML attributes in an XHTML document, e.g:
-
-  ```xhtml
-  <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
-  ```
 
 - For security reasons, validate all messages to ensure no compromisation
   has occurred within any untrustworthy part of the extension
@@ -31,6 +26,7 @@
   - Test nested document nodes (see: [SO](https://stackoverflow.com/questions/26010355/is-there-a-way-to-uniquely-identify-an-iframe-that-the-content-script-runs-in-fo))
   - Shadow roots can be accessed using
     [`chrome.dom.openOrClosedShadowRoot`](https://developer.chrome.com/docs/extensions/reference/api/dom?hl=en#method-openOrClosedShadowRoot)
+- [Validate](https://validator.w3.org) all (X)HTML pages conform to standards
 
 ## Technical Priorities
 

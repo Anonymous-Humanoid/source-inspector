@@ -1,6 +1,7 @@
-import React, { ReactElement } from 'react';
+import React, { ReactNode } from 'react';
 import { NonStoredProps, StoredVirtualNodeProps } from '../base';
 import { BaseUpdateMsg } from '../msgs';
+import { VirtualInlineText } from './text';
 
 interface SharedValues {
     parentId: string;
@@ -21,10 +22,10 @@ export type VirtualCdataSectionProps =
 
 export function VirtualCdataSection(
     props: Readonly<VirtualCdataSectionProps>
-): ReactElement {
+): ReactNode {
     return (
-        <pre className='node'>
-            <p className='text'>{`<![CDATA[${props.nodeValue}]]>`}</p>
-        </pre>
+        <div className='node'>
+            <VirtualInlineText nodeValue={`<![CDATA[${props.nodeValue}]]>`} />
+        </div>
     );
 }

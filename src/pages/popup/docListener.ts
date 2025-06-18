@@ -1,6 +1,5 @@
-import { v4 as uuid } from 'uuid';
-import { TIMEOUT_MS } from './background';
-import {
+import { UpdateProcessingInstructionMsg } from './components';
+import type {
     ConnectMsg,
     PopupMsg,
     RemoveMsg,
@@ -13,56 +12,59 @@ import {
     UpdateTextMsg
 } from './msgs';
 
-interface PartialNodeMutationRecord {
-    readonly type: 'childList';
-    readonly target?: Node | null;
-    readonly addedNodes: NodeList | Node[];
-    readonly removedNodes: NodeList | Node[];
-    readonly previousSibling?: Node | null;
-}
-
-interface PartialAttributeMutationRecord {
-    readonly type: 'attributes';
-    readonly target: Node;
-    readonly attributeName: string;
-}
-
-interface PartialCharacterDataMutationRecord {
-    readonly type: 'characterData';
-    readonly target: Node;
-}
-
-type PartialMutationRecord =
-    | PartialNodeMutationRecord
-    | PartialAttributeMutationRecord
-    | PartialCharacterDataMutationRecord;
-
-type KnownNode =
-    | Element
-    | Attr
-    | Text
-    | CDATASection
-    | EntityReference
-    | Entity
-    | ProcessingInstruction
-    | Comment
-    | Document
-    | DocumentType
-    | DocumentFragment
-    | NotationNode;
-
 /**
  * The document source inspector. Communicates document
  * updates to a popup without invoking DevTools, thereby
  * circumventing debugger detection.
  */
 (async () => {
+    const { v4: uuid } = require('uuid');
+    const { TIMEOUT_MS } = require('./background');
+
+    interface PartialNodeMutationRecord {
+        readonly type: 'childList';
+        readonly target?: Node | null;
+        readonly addedNodes: NodeList | Node[];
+        readonly removedNodes: NodeList | Node[];
+        readonly previousSibling?: Node | null;
+    }
+
+    interface PartialAttributeMutationRecord {
+        readonly type: 'attributes';
+        readonly target: Node;
+        readonly attributeName: string;
+    }
+
+    interface PartialCharacterDataMutationRecord {
+        readonly type: 'characterData';
+        readonly target: Node;
+    }
+
+    type PartialMutationRecord =
+        | PartialNodeMutationRecord
+        | PartialAttributeMutationRecord
+        | PartialCharacterDataMutationRecord;
+
+    type KnownNode =
+        | Element
+        | Attr
+        | Text
+        | CDATASection
+        | EntityReference
+        | Entity
+        | ProcessingInstruction
+        | Comment
+        | Document
+        | DocumentType
+        | DocumentFragment
+        | NotationNode;
+
     const ADD_NODE_SUPPORTED_TYPES = new Set<Readonly<number>>([
         Node['ELEMENT_NODE'],
         // Node['ATTRIBUTE_NODE'], // Should never encounter
         Node['TEXT_NODE'],
         Node['CDATA_SECTION_NODE'],
-        // Node['PROCESSING_INSTRUCTION_NODE'],
+        Node['PROCESSING_INSTRUCTION_NODE'],
         Node['COMMENT_NODE'],
         Node['DOCUMENT_NODE'],
         Node['DOCUMENT_TYPE_NODE']
@@ -83,8 +85,7 @@ type KnownNode =
     >();
     let _initialDomConstructed = false;
     const _mutationCache = new Array<Readonly<PartialMutationRecord>>();
-    let _asyncIndex = 0;
-    let msgCount = 0;
+    let _msgIndex = 0;
 
     /**
      * Passes a message to the popup without waiting for a response.
@@ -194,7 +195,7 @@ type KnownNode =
         const id = _getAttrId(ownerElement, attr, attrName);
         const msg: UpdateAttributeMsg = {
             type: 'update',
-            asyncIndex: _asyncIndex++,
+            msgIndex: _msgIndex++,
             id,
             parentId,
             nodeType: Node.ATTRIBUTE_NODE,
@@ -216,7 +217,8 @@ type KnownNode =
 
                 console.warn(
                     'Encountered attribute in node removal method:',
-                    attr
+                    attr,
+                    'Proceed with caution.'
                 );
 
                 if (attr.ownerElement != null) {
@@ -232,7 +234,7 @@ type KnownNode =
                 const msg: RemoveMsg = {
                     type: 'remove',
                     id,
-                    asyncIndex: _asyncIndex++
+                    msgIndex: _msgIndex++
                 };
 
                 _sendMessage(msg);
@@ -267,9 +269,9 @@ type KnownNode =
         switch (cNode.nodeType) {
             case Node.ELEMENT_NODE: {
                 const parentId = _getId(parentNode);
-                const msg: UpdateElementMsg | UpdateTextMsg = {
+                const msg: UpdateElementMsg = {
                     type: 'update',
-                    asyncIndex: _asyncIndex++,
+                    msgIndex: _msgIndex++,
                     id,
                     parentId,
                     prevSiblingId,
@@ -286,7 +288,7 @@ type KnownNode =
                     parentNode == null ? undefined : _getId(parentNode);
                 const msg: UpdateDocumentMsg = {
                     type: 'update',
-                    asyncIndex: _asyncIndex++,
+                    msgIndex: _msgIndex++,
                     id,
                     parentId,
                     nodeType: cNode.nodeType,
@@ -302,7 +304,7 @@ type KnownNode =
                 const parentId = _getId(parentNode);
                 const msg: UpdateDoctypeMsg = {
                     type: 'update',
-                    asyncIndex: _asyncIndex++,
+                    msgIndex: _msgIndex++,
                     id,
                     parentId,
                     prevSiblingId,
@@ -318,20 +320,25 @@ type KnownNode =
             }
             case Node.TEXT_NODE:
             case Node.CDATA_SECTION_NODE:
+            case Node.PROCESSING_INSTRUCTION_NODE:
             case Node.COMMENT_NODE: {
                 // Setting nodeValue to null actually sets it to an empty string
                 const nodeValue = cNode.nodeValue ?? '';
                 const parentId = _getId(parentNode);
                 const msg = {
                     type: 'update',
-                    asyncIndex: _asyncIndex++,
+                    msgIndex: _msgIndex++,
                     id,
                     parentId,
                     prevSiblingId,
                     nodeType: cNode.nodeType,
                     nodeName: cNode.nodeName,
                     nodeValue
-                } as UpdateTextMsg | UpdateCdataSectionMsg | UpdateCommentMsg;
+                } as
+                    | UpdateTextMsg
+                    | UpdateCdataSectionMsg
+                    | UpdateCommentMsg
+                    | UpdateProcessingInstructionMsg;
 
                 _sendMessage(msg);
                 break;
@@ -340,7 +347,9 @@ type KnownNode =
                 // Should never happen
                 console.error(
                     `Skipping addition of unimplemented node ` +
-                        `of type ${node.nodeType}`
+                        `of type ${node.nodeType}; ` +
+                        `any anomalous parent updates associated with id ` +
+                        `${id} are a result of this.`
                 );
             }
         }

@@ -36,7 +36,10 @@ declare global {
 
     // Extends existing type
     interface ProcessingInstruction {
+        // For XML declaration, see:
+        // https://www.w3.org/TR/2006/REC-xml11-20060816/#sec-prolog-dtd
         nodeType: Node['PROCESSING_INSTRUCTION_NODE'];
+        nodeValue: string;
     }
 
     // Extends existing type

@@ -1,4 +1,4 @@
-import React, { ReactElement } from 'react';
+import React, { ReactNode } from 'react';
 import { NonStoredProps, StoredVirtualNodeProps } from '../base';
 import { BaseUpdateMsg } from '../msgs';
 
@@ -19,6 +19,6 @@ export type VirtualCommentProps = NonStoredProps<StoredVirtualCommentProps>;
 
 export function VirtualComment(
     props: Readonly<VirtualCommentProps>
-): ReactElement {
+): ReactNode {
     return <pre className='comment node'>{`<!--${props.nodeValue}-->`}</pre>;
 }

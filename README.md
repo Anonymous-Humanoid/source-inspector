@@ -46,25 +46,30 @@ file shows the following:
 
 There are also some additional security features we have implemented:
 
-- Content scripts are injected in an isolated world and never modify the DOM.
+- The content script are injected in an isolated world and never modify the DOM.
   This prevents detection while still allowing access to the DOM.
 - Instead of ES6 classes, we use nested functions to create truly
-  private methods in our content script. I.e:
+  private methods in our content script. I.e, something like the following:
 
+  <!-- Prettier is per-file, not per-language -->
+  <!-- prettier-ignore -->
   ```ts
-  (async () => {
-    function _privateMethod(): void {
-      // Super secret internals
-    }
+  const clazzFactory = (async () => {
+      async function _privateMethod(): Promise<void> {
+          // Super secret internals
+      }
 
-    function publicMethod(): void {
-      // Public API
-    }
+      function publicMethod(): void {
+          // Public API
+      }
 
-    return {
-      publicMethod
-    };
-  })();
+      return {
+          publicMethod
+      };
+  });
+  const clazz = clazzFactory();
+
+  clazz.publicMethod();
   ```
 
 <!--
@@ -169,8 +174,21 @@ Basically, it's run alongside the page and has access to the page's source.
 If our extension wasn't trying to be undetectable, we could use this to modify
 the page, such as with ad blocking.
 
-## Caveats
+<!-- ### Source Inspection flow -->
 
+## Issues and Contribution
+
+For a list of planned features and fixes, see the [TODOs](TODO.md)
+
+Below are some caveats this extension has that don't have immediate fixes:
+
+- [XML declarations](https://www.w3.org/TR/2006/REC-xml11-20060816/#NT-XMLDecl)
+  are not included in inspected output due to the lack of Firefox DOM APIs
+  necessary to easily regenerate one. For more information, see the
+  [xmlVersion](https://developer.mozilla.org/en-US/docs/Web/API/Document/xmlVersion),
+  [xmlEncoding](https://developer.mozilla.org/en-US/docs/Web/API/Document/xmlEncoding)
+  and [xmlstandalone](https://developer.mozilla.org/en-US/docs/Web/API/Document#document.xmlstandalone)
+  document properties.
 - We can't currently catch every attribute event. Because `MutationObserver`s
   run at the microtask level, and because attribute `MutationRecord`s don't
   include the new attribute value, we don't yet have a way to get the values
@@ -192,16 +210,15 @@ the page, such as with ad blocking.
   would then allow websites to detect the extension. There is nothing any
   browser extension can do to cicrumvent this. Some examples:
   - In Chrome, a website could send a GET request to
-    `chrome-extension://<YOUR_ID_HERE>/manifest.json`. If it's successful, you
-    have our extension installed.
+  `chrome-extension://<YOUR_ID_HERE>/manifest.json`. If it's successful, you
+  have our extension installed.
+  <!-- Not applicable to us, because we make zero network requests -->
+  <!--
   - In Firefox, by clicking the extension button and activating the inspector,
     the website can look at its
     [origin header](https://bugzilla.mozilla.org/show_bug.cgi?id=1405971)
     and determine that you're trying to use our extension.
-
-## Contribution
-
-For a list of known issues and planned features, see the [TODOs](TODO.md)
+    -->
 
 ## Credits
 

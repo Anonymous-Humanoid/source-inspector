@@ -1,4 +1,4 @@
-import React, { ReactElement } from 'react';
+import React, { ReactNode } from 'react';
 import { NonStoredProps, StoredVirtualNodeProps } from '../base';
 import { BaseUpdateMsg } from '../msgs';
 
@@ -16,11 +16,11 @@ export type StoredVirtualDocumentProps = StoredVirtualNodeProps & SharedValues;
 
 export type VirtualDocumentProps = NonStoredProps<StoredVirtualDocumentProps>;
 
-export function VirtualDocument(props: VirtualDocumentProps): ReactElement {
+export function VirtualDocument(props: VirtualDocumentProps): ReactNode {
     // For security, don't change the rel attribute
     // See: https://stackoverflow.com/a/17711167/8387760
     return (
-        <pre className='document node'>
+        <div className='document node'>
             {`${props.nodeName} (`}
             <a
                 target='_blank'
@@ -31,6 +31,6 @@ export function VirtualDocument(props: VirtualDocumentProps): ReactElement {
             </a>
             {`)`}
             <ul>{props.children}</ul>
-        </pre>
+        </div>
     );
 }

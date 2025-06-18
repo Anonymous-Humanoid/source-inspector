@@ -1,4 +1,4 @@
-import React, { ReactElement } from 'react';
+import React, { ReactNode } from 'react';
 import { NonStoredProps, StoredVirtualNodeProps } from '../base';
 import { BaseUpdateMsg } from '../msgs';
 
@@ -21,7 +21,7 @@ export type VirtualDoctypeProps = NonStoredProps<StoredVirtualDoctypeProps>;
 
 export function VirtualDoctype(
     props: Readonly<VirtualDoctypeProps>
-): ReactElement {
+): ReactNode {
     let xmlId = '';
 
     if (props.publicId !== '') {
@@ -35,8 +35,8 @@ export function VirtualDoctype(
     }
 
     return (
-        <pre className='doctype node'>
+        <div className='doctype node'>
             {`<!DOCTYPE ${props.nodeName}${xmlId}>`}
-        </pre>
+        </div>
     );
 }

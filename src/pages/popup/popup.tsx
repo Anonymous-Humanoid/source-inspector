@@ -1,4 +1,4 @@
-import React, { ReactElement, useEffect, useState } from 'react';
+import React, { ReactNode, useEffect, useState } from 'react';
 import { StoredVirtualNodeProps } from './base';
 import { ChildManager, NodeState } from './childManager';
 import {
@@ -8,6 +8,7 @@ import {
     StoredVirtualDoctypeProps,
     StoredVirtualDocumentProps,
     StoredVirtualElementProps,
+    StoredVirtualProcessingInstructionProps,
     StoredVirtualTextProps
 } from './components';
 import { ConnectMsg, PopupMsg, UpdateMsg } from './msgs';
@@ -42,7 +43,7 @@ function insertMsg(
     msg: Readonly<PopupMsg>
 ): PopupMsg[] {
     return queue.toSpliced(
-        binarySearch(queue, msg, (a, b) => b.asyncIndex - a.asyncIndex),
+        binarySearch(queue, msg, (a, b) => b.msgIndex - a.msgIndex),
         0,
         msg
     );
@@ -86,7 +87,7 @@ function insertAfterSibling(
  *
  * @returns The document source inspection UI component
  */
-export default function StateManager(): ReactElement {
+export default function StateManager(): ReactNode {
     const [firstRun, setFirstRun] = useState<boolean>(true);
     const [tabId, setTabId] = useState<number | undefined>();
     const [root, setRoot] = useState<string | undefined>();
@@ -100,7 +101,7 @@ export default function StateManager(): ReactElement {
         chrome.runtime.onMessage.addListener(generateDocument);
         chrome.runtime.sendMessage({} as any);
         console.log('Popup ready to connect!');
-    } else if (queue[0]?.asyncIndex === queueIndex) {
+    } else if (queue[0]?.msgIndex === queueIndex) {
         // Sending queued messages
         // Relies on state 'nodes', so only one message is processed per render
         const msg = queue[0];
@@ -362,6 +363,7 @@ export default function StateManager(): ReactElement {
                 break;
             }
             case Node.CDATA_SECTION_NODE:
+            case Node.PROCESSING_INSTRUCTION_NODE:
             case Node.COMMENT_NODE:
             case Node.DOCUMENT_TYPE_NODE: {
                 const parentId = msg.parentId;
@@ -373,6 +375,7 @@ export default function StateManager(): ReactElement {
 
                 const state:
                     | StoredVirtualCdataSectionProps
+                    | StoredVirtualProcessingInstructionProps
                     | StoredVirtualCommentProps
                     | StoredVirtualDoctypeProps = {
                     ...msg,
@@ -384,7 +387,6 @@ export default function StateManager(): ReactElement {
             }
             case Node.ENTITY_REFERENCE_NODE:
             case Node.ENTITY_NODE:
-            case Node.PROCESSING_INSTRUCTION_NODE:
             case Node.DOCUMENT_FRAGMENT_NODE:
             case Node.NOTATION_NODE:
             default: {

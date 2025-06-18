@@ -5,6 +5,7 @@ import {
     UpdateDoctypeMsg,
     UpdateDocumentMsg,
     UpdateElementMsg,
+    UpdateProcessingInstructionMsg,
     UpdateTextMsg
 } from './components';
 
@@ -22,10 +23,10 @@ export type PopupMsg = RemoveMsg | UpdateMsg;
 
 interface Msg {
     type: string;
-    asyncIndex: number;
+    msgIndex: number;
 }
 
-export interface ConnectMsg extends Omit<Msg, 'asyncIndex'> {
+export interface ConnectMsg extends Omit<Msg, 'msgIndex'> {
     type: 'connection';
     tabId: number;
 }
@@ -42,7 +43,7 @@ export type UpdateMsg =
     | UpdateCdataSectionMsg
     | UpdateEntityRefMsg
     | UpdateEntityMsg
-    | UpdateInstructionMsg
+    | UpdateProcessingInstructionMsg
     | UpdateCommentMsg
     | UpdateDocumentMsg
     | UpdateDoctypeMsg
@@ -65,10 +66,6 @@ export interface UpdateEntityRefMsg extends BaseUpdateMsg {
 
 export interface UpdateEntityMsg extends BaseUpdateMsg {
     nodeType: Node['ENTITY_NODE'];
-}
-
-export interface UpdateInstructionMsg extends BaseUpdateMsg {
-    nodeType: Node['PROCESSING_INSTRUCTION_NODE'];
 }
 
 export interface UpdateDocFragmentMsg extends BaseUpdateMsg {
