@@ -1,20 +1,20 @@
 import React, { ReactNode } from 'react';
 import { BaseUpdateMsg } from '../msgs';
 import { VirtualInlineText } from './text';
-import { NonStoredProps, StoredVirtualNodeProps } from '../base';
+import { NoChildren, NonStoredProps, StoredVirtualNodeProps } from '../base';
 
 export interface SharedValues {
     parentId: string;
     nodeType: Node['PROCESSING_INSTRUCTION_NODE'];
     nodeValue: string;
     prevSiblingId?: string;
-    children?: never[];
 }
 
 export type UpdateProcessingInstructionMsg = BaseUpdateMsg & SharedValues;
 
 export type StoredVirtualProcessingInstructionProps = StoredVirtualNodeProps &
-    SharedValues & { childNodeIds: never[] };
+    SharedValues &
+    NoChildren;
 
 export type VirtualProcessingInstructionProps =
     NonStoredProps<StoredVirtualProcessingInstructionProps>;

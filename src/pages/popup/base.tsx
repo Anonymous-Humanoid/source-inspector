@@ -8,11 +8,14 @@ export interface StoredVirtualNodeProps {
     parentId?: string;
 }
 
-export type NonStoredProps<P> = VirtualNodeProps &
-    Omit<P, 'childNodeIds' | 'attributeIds'>;
-
-export interface VirtualNodeProps
-    extends Omit<StoredVirtualNodeProps, 'childNodeIds'> {
-    id: string;
-    children?: ReactNode[];
+export interface NoChildren {
+    childNodeIds: never[];
 }
+
+export type NonStoredProps<P> = Omit<
+    StoredVirtualNodeProps & P,
+    'childNodeIds' | 'attributeIds'
+> & {
+    id: string;
+    children?: P extends NoChildren ? never[] : ReactNode[];
+};

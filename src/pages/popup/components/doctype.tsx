@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react';
-import { NonStoredProps, StoredVirtualNodeProps } from '../base';
+import { NoChildren, NonStoredProps, StoredVirtualNodeProps } from '../base';
 import { BaseUpdateMsg } from '../msgs';
 
 interface SharedValues {
@@ -9,13 +9,13 @@ interface SharedValues {
     nodeValue: null;
     publicId: string;
     systemId: string;
-    children?: never[];
 }
 
 export type UpdateDoctypeMsg = BaseUpdateMsg & SharedValues;
 
 export type StoredVirtualDoctypeProps = StoredVirtualNodeProps &
-    SharedValues & { childNodeIds: never[] };
+    SharedValues &
+    NoChildren;
 
 export type VirtualDoctypeProps = NonStoredProps<StoredVirtualDoctypeProps>;
 

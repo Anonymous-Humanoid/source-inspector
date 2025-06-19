@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react';
-import { NonStoredProps, StoredVirtualNodeProps } from '../base';
+import { NoChildren, NonStoredProps, StoredVirtualNodeProps } from '../base';
 import { BaseUpdateMsg } from '../msgs';
 
 interface SharedValues {
@@ -8,12 +8,13 @@ interface SharedValues {
     nodeName: '#comment';
     nodeValue: string;
     prevSiblingId?: string;
-    children?: never[];
 }
 
 export type UpdateCommentMsg = BaseUpdateMsg & SharedValues;
 
-export type StoredVirtualCommentProps = StoredVirtualNodeProps & SharedValues;
+export type StoredVirtualCommentProps = StoredVirtualNodeProps &
+    SharedValues &
+    NoChildren;
 
 export type VirtualCommentProps = NonStoredProps<StoredVirtualCommentProps>;
 

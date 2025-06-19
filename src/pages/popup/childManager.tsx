@@ -108,9 +108,7 @@ function renderAttribute(
                 nodeType={node.nodeType}
                 nodeName={node.nodeName}
                 nodeValue={node.nodeValue}
-            >
-                {renderChildren(node, props.nodes)}
-            </VirtualAttribute>
+            />
         </>
     );
 }

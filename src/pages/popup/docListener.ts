@@ -200,8 +200,7 @@ import type {
             parentId,
             nodeType: Node.ATTRIBUTE_NODE,
             nodeName: attrName.toLowerCase(),
-            nodeValue: attr?.nodeValue ?? null,
-            childNodeIds: []
+            nodeValue: attr?.nodeValue ?? null
         };
 
         _sendMessage(msg);

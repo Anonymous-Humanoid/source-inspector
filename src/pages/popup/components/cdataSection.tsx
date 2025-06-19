@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react';
-import { NonStoredProps, StoredVirtualNodeProps } from '../base';
+import { NoChildren, NonStoredProps, StoredVirtualNodeProps } from '../base';
 import { BaseUpdateMsg } from '../msgs';
 import { VirtualInlineText } from './text';
 
@@ -9,13 +9,13 @@ interface SharedValues {
     nodeName: '#cdata-section';
     nodeValue: string;
     prevSiblingId?: string;
-    children?: never[];
 }
 
 export type UpdateCdataSectionMsg = BaseUpdateMsg & SharedValues;
 
 export type StoredVirtualCdataSectionProps = StoredVirtualNodeProps &
-    SharedValues;
+    SharedValues &
+    NoChildren;
 
 export type VirtualCdataSectionProps =
     NonStoredProps<StoredVirtualCdataSectionProps>;
