@@ -1,6 +1,6 @@
-import React, { ReactNode, useEffect, useState } from 'react';
+import React, { createContext, ReactNode, useEffect, useState } from 'react';
 import { StoredVirtualNodeProps } from './base';
-import { ChildManager, NodeState } from './childManager';
+import { ChildManager } from './childManager';
 import {
     StoredVirtualAttributeProps,
     StoredVirtualCdataSectionProps,
@@ -12,6 +12,10 @@ import {
     StoredVirtualTextProps
 } from './components';
 import { ConnectMsg, PopupMsg, UpdateMsg } from './msgs';
+
+export type NodeState = { [id: string]: StoredVirtualNodeProps };
+
+export const NodeContext = createContext<NodeState>({});
 
 function binarySearch<T>(
     arr: Readonly<T[]>,
@@ -203,7 +207,6 @@ export default function StateManager(): ReactNode {
         id: Readonly<string>,
         parentId: Readonly<string>
     ): void {
-        // If the attribute already exists, it's updated accordingly
         setNodes((prevNodes) => {
             const prevParentState = prevNodes[
                 parentId
@@ -404,7 +407,7 @@ export default function StateManager(): ReactNode {
      * @param msg
      */
     function queueMessage(msg: Readonly<PopupMsg>): void {
-        setQueue((queue) => insertMsg(queue, msg));
+        setQueue((q) => insertMsg(q, msg));
     }
 
     /**
@@ -457,8 +460,11 @@ export default function StateManager(): ReactNode {
     }
 
     // Rendering popup
-    const childNodes =
-        root == null ? undefined : <ChildManager id={root} nodes={nodes} />;
+    const childNodes = root == null ? undefined : <ChildManager id={root} />;
 
-    return <main id='app'>{childNodes}</main>;
+    return (
+        <main id='app'>
+            <NodeContext value={nodes}>{childNodes}</NodeContext>
+        </main>
+    );
 }

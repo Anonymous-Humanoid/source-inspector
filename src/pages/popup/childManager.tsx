@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useContext } from 'react';
 import { StoredVirtualNodeProps } from './base';
 import {
     StoredVirtualAttributeProps,
@@ -19,13 +19,7 @@ import {
     VirtualProcessingInstruction,
     VirtualText
 } from './components';
-
-export type NodeState = { [id: string]: StoredVirtualNodeProps };
-
-interface ChildManagerProps {
-    id: string;
-    nodes: NodeState;
-}
+import { NodeContext, NodeState } from './popup';
 
 function renderDebug(id: Readonly<string>): ReactNode {
     return (
@@ -35,27 +29,23 @@ function renderDebug(id: Readonly<string>): ReactNode {
     );
 }
 
-function renderChildren(
-    node: Readonly<StoredVirtualNodeProps>,
-    nodes: Readonly<NodeState>
-): ReactNode[] {
-    return node.childNodeIds.map((id) => (
-        <ChildManager id={id} key={id} nodes={nodes} />
-    ));
+function renderChildren(node: Readonly<StoredVirtualNodeProps>): ReactNode[] {
+    return node.childNodeIds.map((id) => <ChildManager id={id} key={id} />);
 }
 
 function renderElement(
-    props: Readonly<ChildManagerProps>,
-    node: Readonly<StoredVirtualElementProps>
+    id: Readonly<string>,
+    node: Readonly<StoredVirtualElementProps>,
+    nodes: Readonly<NodeState>
 ): ReactNode {
-    const attrs = node.attributeIds.keys().map((id) => {
-        const attrNode = props.nodes[id] as StoredVirtualAttributeProps;
+    const attrs = node.attributeIds.keys().map((attrId) => {
+        const attrNode = nodes[attrId] as StoredVirtualAttributeProps;
 
         return (
             <VirtualAttribute
-                id={id}
-                key={id}
-                parentId={props.id}
+                id={attrId}
+                key={attrId}
+                parentId={id}
                 nodeValue={attrNode.nodeValue}
                 nodeName={attrNode.nodeName}
                 nodeType={attrNode.nodeType}
@@ -72,19 +62,19 @@ function renderElement(
             ...attrs,
             '>',
             <VirtualInlineText
-                key={`${props.id}-inline`}
+                key={`${id}-inline`}
                 nodeValue={node.nodeValue ?? ''}
             />,
-            ...renderChildren(node, props.nodes),
+            ...renderChildren(node),
             `</${node.nodeName}>`
         ];
     }
 
     return (
         <>
-            {renderDebug(props.id)}
+            {renderDebug(id)}
             <VirtualElement
-                id={props.id}
+                id={id}
                 nodeType={node.nodeType}
                 nodeName={node.nodeName}
                 nodeValue={node.nodeValue}
@@ -96,14 +86,14 @@ function renderElement(
 }
 
 function renderAttribute(
-    props: Readonly<ChildManagerProps>,
+    id: Readonly<string>,
     node: Readonly<StoredVirtualAttributeProps>
 ): ReactNode {
     return (
         <>
-            {renderDebug(props.id)}
+            {/* {renderDebug(id)} */}
             <VirtualAttribute
-                id={props.id}
+                id={id}
                 parentId={node.parentId}
                 nodeType={node.nodeType}
                 nodeName={node.nodeName}
@@ -114,14 +104,14 @@ function renderAttribute(
 }
 
 function renderText(
-    props: Readonly<ChildManagerProps>,
+    id: Readonly<string>,
     node: Readonly<StoredVirtualTextProps>
 ): ReactNode {
     return (
         <>
-            {renderDebug(props.id)}
+            {renderDebug(id)}
             <VirtualText
-                id={props.id}
+                id={id}
                 nodeType={node.nodeType}
                 nodeName={node.nodeName}
                 nodeValue={node.nodeValue}
@@ -133,14 +123,14 @@ function renderText(
 }
 
 function renderCdataSection(
-    props: Readonly<ChildManagerProps>,
+    id: Readonly<string>,
     node: Readonly<StoredVirtualCdataSectionProps>
 ): ReactNode {
     return (
         <>
-            {renderDebug(props.id)}
+            {renderDebug(id)}
             <VirtualCdataSection
-                id={props.id}
+                id={id}
                 nodeType={node.nodeType}
                 nodeName={node.nodeName}
                 nodeValue={node.nodeValue}
@@ -152,14 +142,14 @@ function renderCdataSection(
 }
 
 function renderProcessingInstruction(
-    props: Readonly<ChildManagerProps>,
+    id: Readonly<string>,
     node: Readonly<StoredVirtualProcessingInstructionProps>
 ): ReactNode {
     return (
         <>
-            {renderDebug(props.id)}
+            {renderDebug(id)}
             <VirtualProcessingInstruction
-                id={props.id}
+                id={id}
                 nodeType={node.nodeType}
                 nodeName={node.nodeName}
                 nodeValue={node.nodeValue}
@@ -171,14 +161,14 @@ function renderProcessingInstruction(
 }
 
 function renderComment(
-    props: Readonly<ChildManagerProps>,
+    id: Readonly<string>,
     node: Readonly<StoredVirtualCommentProps>
 ): ReactNode {
     return (
         <>
-            {renderDebug(props.id)}
+            {renderDebug(id)}
             <VirtualComment
-                id={props.id}
+                id={id}
                 nodeType={node.nodeType}
                 nodeName={node.nodeName}
                 nodeValue={node.nodeValue}
@@ -190,34 +180,34 @@ function renderComment(
 }
 
 function renderDocument(
-    props: Readonly<ChildManagerProps>,
+    id: Readonly<string>,
     node: Readonly<StoredVirtualDocumentProps>
 ): ReactNode {
     return (
         <>
-            {renderDebug(props.id)}
+            {renderDebug(id)}
             <VirtualDocument
-                id={props.id}
+                id={id}
                 nodeType={node.nodeType}
                 nodeName={node.nodeName}
                 nodeValue={node.nodeValue}
                 documentURI={node.documentURI}
             >
-                {renderChildren(node, props.nodes)}
+                {renderChildren(node)}
             </VirtualDocument>
         </>
     );
 }
 
 function renderDoctype(
-    props: Readonly<ChildManagerProps>,
+    id: Readonly<string>,
     node: Readonly<StoredVirtualDoctypeProps>
 ): ReactNode {
     return (
         <>
-            {renderDebug(props.id)}
+            {renderDebug(id)}
             <VirtualDoctype
-                id={props.id}
+                id={id}
                 nodeType={node.nodeType}
                 nodeName={node.nodeName}
                 nodeValue={node.nodeValue}
@@ -229,39 +219,40 @@ function renderDoctype(
     );
 }
 
-export function ChildManager(props: Readonly<ChildManagerProps>): ReactNode {
-    const node = props.nodes[props.id];
+export function ChildManager({ id }: { readonly id: string }): ReactNode {
+    const nodes = useContext<NodeState>(NodeContext);
+    const node = nodes[id];
 
     switch (node.nodeType) {
         case Node.ELEMENT_NODE: {
-            return renderElement(props, node as StoredVirtualElementProps);
+            return renderElement(id, node as StoredVirtualElementProps, nodes);
         }
         case Node.ATTRIBUTE_NODE: {
-            return renderAttribute(props, node as StoredVirtualAttributeProps);
+            return renderAttribute(id, node as StoredVirtualAttributeProps);
         }
         case Node.TEXT_NODE: {
-            return renderText(props, node as StoredVirtualTextProps);
+            return renderText(id, node as StoredVirtualTextProps);
         }
         case Node.CDATA_SECTION_NODE: {
             return renderCdataSection(
-                props,
+                id,
                 node as StoredVirtualCdataSectionProps
             );
         }
         case Node.PROCESSING_INSTRUCTION_NODE: {
             return renderProcessingInstruction(
-                props,
+                id,
                 node as StoredVirtualProcessingInstructionProps
             );
         }
         case Node.COMMENT_NODE: {
-            return renderComment(props, node as StoredVirtualCommentProps);
+            return renderComment(id, node as StoredVirtualCommentProps);
         }
         case Node.DOCUMENT_NODE: {
-            return renderDocument(props, node as StoredVirtualDocumentProps);
+            return renderDocument(id, node as StoredVirtualDocumentProps);
         }
         case Node.DOCUMENT_TYPE_NODE: {
-            return renderDoctype(props, node as StoredVirtualDoctypeProps);
+            return renderDoctype(id, node as StoredVirtualDoctypeProps);
         }
         case Node.ENTITY_REFERENCE_NODE:
         case Node.ENTITY_NODE:
@@ -270,7 +261,7 @@ export function ChildManager(props: Readonly<ChildManagerProps>): ReactNode {
         default: {
             return (
                 <>
-                    {renderDebug(props.id)}
+                    {renderDebug(id)}
                     <div className='node'>
                         {`Unsupported node type: ${node.nodeType}`}
                     </div>

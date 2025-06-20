@@ -22,7 +22,7 @@
   (see: the [issue tracker](https://issuetracker.google.com/issues/311491887)
   and the referenced
   [docs](https://chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/security/compromised-renderers.md#Messaging))
-- Add documentation where it's missing or necessary (e.g, @param or @returns)
+- Add documentation where it's missing or necessary (e.g, @param or @template)
 - Support character data mutations
 - Finish supporting all applicable node types
   - Test nested document nodes (see: [SO](https://stackoverflow.com/questions/26010355/is-there-a-way-to-uniquely-identify-an-iframe-that-the-content-script-runs-in-fo))
@@ -45,7 +45,6 @@
 - Configure ESLint:
   - Ensure ESLint config file path is correctly recognized and interpreted
   - Replace Prettier formatting with ESLint to resolve rule conflicts
-- Add chromium-extension-boilerplate as an upstream repo dependency
 - Add a light mode toggle
 
 ## Backlog Priorities
