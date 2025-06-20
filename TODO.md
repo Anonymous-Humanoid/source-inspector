@@ -2,8 +2,8 @@
 
 ## Functional Priorities
 
-- StateManager needs to process multiple messages per render
-  or defer rendering to avoid
+- StateManager needs to process multiple messages per render, defer rendering,
+  or decouple the renderer (`setState`) to avoid
   `Uncaught Error: Too many re-renders. React limits the number of renders`
   `to prevent an infinite loop` on complex websites
 - Add Firefox extension support,
@@ -28,11 +28,13 @@
   - Test nested document nodes (see: [SO](https://stackoverflow.com/questions/26010355/is-there-a-way-to-uniquely-identify-an-iframe-that-the-content-script-runs-in-fo))
   - Shadow roots can be accessed using
     [`chrome.dom.openOrClosedShadowRoot`](https://developer.chrome.com/docs/extensions/reference/api/dom?hl=en#method-openOrClosedShadowRoot)
-- [Validate](https://validator.w3.org) all (X)HTML pages conform to standards
+- [Validate](https://validator.w3.org) sample inspector pages
+  conform to a11y standards
 
 ## Technical Priorities
 
-- For accessibility purposes, add the ability
+- Rethink debug view (possibly a test-id field?)
+- For a11y purposes, add the ability
   to select and navigate between elements in the inspector
 - Add an [error boundary](https://react.dev/link/error-boundaries)
   for improved debugging UX
@@ -40,8 +42,6 @@
 - Migrate ChildManager to a
   [reducer](https://react.dev/learn/extracting-state-logic-into-a-reducer)
   for increased maintainability
-- ChildManager prop drills `nodes`:
-  use a shared context and provider (in ChildManager) to manage deep node state
 - Configure ESLint:
   - Ensure ESLint config file path is correctly recognized and interpreted
   - Replace Prettier formatting with ESLint to resolve rule conflicts
@@ -82,6 +82,5 @@
 - If project scope allows it, add an options page to allow the content script
   to be automatically reinjected on page or tab (re)load
 - If project scope allows it, add a network request viewer
-- If the project scope allows it, install the dependencies necessary for Webhint
-  and its .hintrc config file and resolve any vulnerabilities
-- If the project scope allows it, add more accessibility customization
+- If the project scope allows it, install the dependencies necessary
+  for Webhint and its .hintrc config file and resolve any vulnerabilities
