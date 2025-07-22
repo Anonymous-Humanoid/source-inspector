@@ -17,7 +17,7 @@
     },
     "dependencies": {
         "async-mutex": "^0.5.0",
-        "form-data": "^4.0.3",
+        "form-data": "^4.0.4",
         "https": "^1.0.0",
         "react": "^19.1.0",
         "react-dom": "^19.1.0",
