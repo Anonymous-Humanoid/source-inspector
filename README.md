@@ -12,7 +12,8 @@ DevTools is probably the most popular debugger, as it's shipped with Chrome.
 It's a great resource, as are the many open-source alternatives. However, these
 debuggers all rely on the browser's native debugger. Some very smart people have
 figured out ways to detect when a debugger has been attached to their site,
-whether through the web page debugger or through the browser extension debugger.
+whether through [DevTools](https://developer.chrome.com/docs/devtools)
+or through [browser.debugger](https://developer.chrome.com/docs/extensions/reference/api/debugger).
 
 Enter `source-inspector`. We attempt to circumvent detection, so that you can
 safely view the live HTML source of even the sketchiest websites. This tool is
@@ -32,8 +33,11 @@ this is an extension intended for offline use.
 For more technical readers with a knowledge of browser extensions, the manifest
 file shows the following:
 
-- We do not have any web accessible resources, except for the manifest itself,
-  which is outside of any extension's control.
+- We do not have any web accessible resources.
+  <!--
+  Note: If ever we require web accessible resources, see `use_dynamic_url`:
+  https://developer.chrome.com/docs/extensions/reference/manifest/web-accessible-resources
+  -->
 - Running the extension in normal or incognito mode uses separate processes and
   separate memory. This means the extension in one mode cannot communicate
   with- or access any data from- the other. In other words, our extension
@@ -193,6 +197,10 @@ Below are some caveats this extension has that don't have immediate fixes:
   run at the microtask level, and because attribute `MutationRecord`s don't
   include the new attribute value, we don't yet have a way to get the values
   of attributes every time they're updated, only most times.
+  <!--
+  This could potentially be fixed by polling existing elements,
+  but that gets expensive quickly
+  -->
 - This extension is subject to the same restrictions as any extension. That
   means that protected URLs, such as `chrome://`, `edge://`,
   `chrome-extension://` and `about://`, cannot be inspected. Ironically, this
@@ -204,21 +212,25 @@ Below are some caveats this extension has that don't have immediate fixes:
   Because of how this extension works and the restrictions we apply to it for
   the user's sake, this will be included in the inspected source. In other
   words, if you can see it, so can this extension.
-- If we were to publish this extension to the Chrome or Firefox web stores,
+  <!-- Not applicable to us -->
+  <!-- - If we were to publish this extension to the Chrome or Firefox web stores,
   this extension would unfortunately cease to be undetectable. Publishing would
   result in the extension being associated with a fixed extension ID, which
   would then allow websites to detect the extension. There is nothing any
-  browser extension can do to cicrumvent this. Some examples:
-  - In Chrome, a website could send a GET request to
-  `chrome-extension://<YOUR_ID_HERE>/manifest.json`. If it's successful, you
-  have our extension installed.
+  browser extension can do to cicrumvent this.
+  -->
+  <!-- Not applicable to us, as we expose no web accessible resources -->
+  <!-- - In Chrome, a website could send a GET request to
+      `chrome-extension://<YOUR_ID_HERE>/manifest.json`. If it's successful, you
+      have our extension installed.
+      [See this working demo](https://browserleaks.com/chrome).
+  -->
   <!-- Not applicable to us, because we make zero network requests -->
-  <!--
-  - In Firefox, by clicking the extension button and activating the inspector,
-    the website can look at its
-    [origin header](https://bugzilla.mozilla.org/show_bug.cgi?id=1405971)
-    and determine that you're trying to use our extension.
-    -->
+  <!-- - In Firefox, by clicking the extension button and activating the inspector,
+      the website can look at its
+      [origin header]()
+      and determine that you're trying to use our extension.
+  -->
 
 ## Credits
 
