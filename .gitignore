@@ -2,7 +2,6 @@
 /node_modules
 
 # Testing
-/test
 /coverage
 
 # Build outputs
