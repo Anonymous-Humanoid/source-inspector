@@ -5,7 +5,8 @@
 - StateManager needs to process multiple messages per render, defer rendering,
   or decouple the renderer (`setState`) to avoid
   `Uncaught Error: Too many re-renders. React limits the number of renders`
-  `to prevent an infinite loop` on complex websites
+  `to prevent an infinite loop` on complex websites.
+  Note: temporarily patched by a horrible hack in 27ec48ab57cdf1182c9190985ce78db7562606e8
 - Add Firefox extension support,
   see: [signing](https://extensionworkshop.com/documentation/publish/)
 - Write `README.md`
