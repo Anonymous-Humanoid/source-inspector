@@ -19,7 +19,7 @@ import {
     VirtualProcessingInstruction,
     VirtualText
 } from './components';
-import { NodeContext, NodeState } from './popup';
+import { NodeContext, NodeState } from './stateManager';
 
 function renderDebug(id: Readonly<string>): ReactNode {
     return (

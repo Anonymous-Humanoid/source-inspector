@@ -2,15 +2,16 @@
 
 ## Functional Priorities
 
-- StateManager needs to process multiple messages per render, defer rendering,
-  or decouple the renderer (`setState`) to avoid
-  `Uncaught Error: Too many re-renders. React limits the number of renders`
-  `to prevent an infinite loop` on complex websites.
-  Note: temporarily patched by a horrible hack in 27ec48ab57cdf1182c9190985ce78db7562606e8
-- Add Firefox extension support,
-  see: [signing](https://extensionworkshop.com/documentation/publish/)
+- State manager queueing instance variables need to be asynchronous, as
+  too many updates can cause desynchronized calls. This has been tested.
+  For the future developer's sanity, state instance variables should also
+  be asynchronous. `setState` equivalents should be defined for parity
+  with React.
+- Add Firefox extension support.
+  See: [signing](https://extensionworkshop.com/documentation/publish/)
 - Write `README.md`
   - How it Works section
+    - Source Inspection Flow
 - Add dropdown functionality to all nodes with children
 - When elements are added, children and text should be processed
 - Fix duplicate attribute names when adding a second or more attributes
@@ -38,8 +39,8 @@
 - For a11y purposes, add the ability
   to select and navigate between elements in the inspector
 - Add an [error boundary](https://react.dev/link/error-boundaries)
-  for improved debugging UX
-- Move top-level configuration files to their own folder
+  for improved debugging UX. See also:
+  [createRoot options](https://react.dev/reference/react-dom/client/createRoot#parameters)
 - Migrate ChildManager to a
   [reducer](https://react.dev/learn/extracting-state-logic-into-a-reducer)
   for increased maintainability
