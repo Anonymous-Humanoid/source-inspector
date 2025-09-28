@@ -6,7 +6,7 @@
         "./config/webserver.ts",
         "./config/webpack.config.ts",
         "./src/react-app-env.d.ts",
-        "package-lock.json",
+        "./package-lock.json",
         "tsconfig.json"
     ],
     "env": {
