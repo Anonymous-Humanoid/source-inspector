@@ -3,7 +3,8 @@
 [![License][license-image]][license-url]
 
 Note: This extension currently only supports desktop devices using Chrome or
-Chromium derivatives, such as Edge.
+Chromium derivatives, such as Edge. We aim to support all the node types
+currently in use and not deprecated as per [MDN](https://developer.mozilla.org/en-US/docs/Web/API/Node/nodeType).
 
 ## Motivation
 
@@ -17,7 +18,7 @@ or through [browser.debugger](https://developer.chrome.com/docs/extensions/refer
 
 Enter `source-inspector`. We attempt to circumvent detection, so that you can
 safely view the live HTML source of even the sketchiest websites. This tool is
-intended to let you create a browser extension for any website, whether it's
+intended to let you inspect the source of any website live, whether it's
 rendered in HTML or XHTML.
 
 ## Privacy and Security
@@ -75,6 +76,11 @@ There are also some additional security features we have implemented:
 
   clazz.publicMethod();
   ```
+
+The only possible means of detecting this extension could be a timing attack,
+which is beyond the skill set of this repository's owner. If you're able to
+present a proof-of-concept or potential patches, please feel free to do so.
+For now, this remains only an unproven theory with no supporting evidence.
 
 <!--
 - All messages are validated to ensure that no part of the extension has been
@@ -186,6 +192,12 @@ For a list of planned features and fixes, see the [TODOs](TODO.md)
 
 Below are some caveats this extension has that don't have immediate fixes:
 
+- Obsolete node types are either ignored or replaced by modern browsers,
+  which makes it particularly difficult for us to support them.
+  For instance, try the [entity reference test](./test/entity_reference_test.xhtml)
+  in your browser. If you're using a modern browser, everything should be
+  valid HTML. But if you look at the page source, there's something weird
+  in the doctype...
 - [XML declarations](https://www.w3.org/TR/2006/REC-xml11-20060816/#NT-XMLDecl)
   are not included in inspected output due to the lack of Firefox DOM APIs
   necessary to easily regenerate one. For more information, see the
