@@ -84,6 +84,9 @@ import type {
         Array<{ id: string; attrName: string }>
     >();
     let _initialDomConstructed = false;
+    /**
+     * @implNote Not thread safe: do not use in a multithreaded environment
+     */
     const _mutationCache = new Array<Readonly<PartialMutationRecord>>();
     let _msgIndex = 0;
 
@@ -236,6 +239,8 @@ import type {
                     msgIndex: _msgIndex++
                 };
 
+                _elementMap.delete(node);
+
                 _sendMessage(msg);
             } else {
                 console.info('Ignoring anomalous node removal:', node);
@@ -364,7 +369,8 @@ import type {
 
     function _tryFlushingCache(): void {
         if (_initialDomConstructed) {
-            for (const mutation of _mutationCache) {
+            let mutation: PartialMutationRecord | undefined;
+            while ((mutation = _mutationCache.shift()) != null) {
                 switch (mutation.type) {
                     case 'childList': {
                         _addedNodesHandler(mutation);

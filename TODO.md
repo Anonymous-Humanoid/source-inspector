@@ -8,13 +8,11 @@
   - How it Works section
     - Source Inspection Flow
 - Add dropdown functionality to all nodes with children
-- When elements are added, children and text should be processed
+- When elements are added (e.g, through script or DevTools),
+  children and text should be processed
 - Fix duplicate attribute names when adding a second or more attributes
   to an element using DevTool's "Edit as HTML" function
   (possible race condition)
-- Fix adding nodes with previous node IDs,
-  (e.g, removing a node in DevTools and then undoing the action)
-  as children and attributes are present without a mutation event
 - For security reasons, validate all messages to ensure no compromisation
   has occurred within any untrustworthy part of the extension
   (see: the [issue tracker](https://issuetracker.google.com/issues/311491887)
