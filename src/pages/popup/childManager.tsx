@@ -90,16 +90,13 @@ function renderAttribute(
     node: Readonly<StoredVirtualAttributeProps>
 ): ReactNode {
     return (
-        <>
-            {/* {renderDebug(id)} */}
-            <VirtualAttribute
-                id={id}
-                parentId={node.parentId}
-                nodeType={node.nodeType}
-                nodeName={node.nodeName}
-                nodeValue={node.nodeValue}
-            />
-        </>
+        <VirtualAttribute
+            id={id}
+            parentId={node.parentId}
+            nodeType={node.nodeType}
+            nodeName={node.nodeName}
+            nodeValue={node.nodeValue}
+        />
     );
 }
 

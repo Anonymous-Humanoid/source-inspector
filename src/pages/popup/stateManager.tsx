@@ -1,3 +1,4 @@
+import { Mutex, withTimeout } from 'async-mutex';
 import React, { createContext, ReactNode } from 'react';
 import { StoredVirtualNodeProps } from './base';
 import {
@@ -17,7 +18,7 @@ export type NodeState = { [id: string]: StoredVirtualNodeProps };
 
 export const NodeContext = createContext<NodeState>({});
 
-export interface PopupProps {
+interface PopupProps {
     rootId: string | undefined;
     nodes: NodeState;
 }
@@ -32,43 +33,41 @@ export class PopupManager {
     private readonly generateDocument;
     private readonly queueMessage;
     private readonly onDisconnect;
-    private newConnection: chrome.runtime.Port | null;
-    private queue: PopupMsg[];
-    private queueIndex: number;
+    private newConnection: chrome.runtime.Port | undefined;
 
+    private readonly queueLock: Mutex;
     /**
-     * @implNote To prevent unsynchronized state access,
-     * state should be treated as if it were immutable,
-     * like React states. In simpler terms, set the state
-     * all at once, don't modify it piece-by-piece.
-     * This way, unsynchronized access will only return
-     * a previous state, rather than a potentially malformed
-     * state. Obviously, this means that state setting should
-     * be handled by only one thread, as opposed to retrieving.
+     * @implNote Not thread safe: must only be called under the {@link queueLock}
      */
-    private rootId: string | undefined;
+    private _queue: PopupMsg[];
     /**
-     * @implNote To prevent unsynchronized state access,
-     * state should be treated as if it were immutable,
-     * like React states. In simpler terms, set the state
-     * all at once, don't modify it piece-by-piece.
-     * This way, unsynchronized access will only return
-     * a previous state, rather than a potentially malformed
-     * state. Obviously, this means that state setting should
-     * be handled by only one thread, as opposed to retrieving.
+     * @implNote Not thread safe: must only be called under the {@link queueLock}
      */
-    private nodes: NodeState;
+    private _queueIndex: number;
+
+    private readonly nodeLock: Mutex;
+    /**
+     * @implNote Not thread safe: must only be called under the {@link nodeLock}
+     */
+    private _rootId: string | undefined;
+    /**
+     * @implNote Not thread safe: must only be called under the {@link nodeLock}
+     */
+    private _nodes: NodeState;
 
     constructor() {
         this.connectTab = this._connectTab.bind(this);
         this.generateDocument = this._generateDocument.bind(this);
         this.queueMessage = this._queueMessage.bind(this);
         this.onDisconnect = this._onDisconnect.bind(this);
-        this.newConnection = null;
-        this.queue = [];
-        this.queueIndex = 0;
-        this.rootId = undefined;
-        this.nodes = {};
+
+        this.queueLock = new Mutex();
+        this._queue = [];
+        this._queueIndex = 0;
+
+        this.nodeLock = new Mutex();
+        this._rootId = undefined;
+        this._nodes = {};
     }
 
     /**
@@ -182,18 +181,27 @@ export class PopupManager {
     /**
      * Places the given message into a queue for processing
      * @param msg
+     * @implNote Thread safety: acquires the {@link queueLock}
      */
-    private _queueMessage(msg: Readonly<PopupMsg>): void {
-        this.queue = this.insertMsg(this.queue, msg);
+    private async _queueMessage(msg: Readonly<PopupMsg>): Promise<void> {
+        await this.queueLock.acquire();
 
-        if (this.queue[0]?.msgIndex === this.queueIndex) {
+        try {
+            let currentQueue = this.insertMsg(this._queue, msg);
+            let currentQueueIndex = this._queueIndex;
+
             // Sending queued messages
-            // Relies on state 'nodes', so only one message is processed per render
-            const msg = this.queue[0];
+            while (currentQueue[0]?.msgIndex === currentQueueIndex) {
+                const msg = currentQueue.shift() as PopupMsg;
 
-            this.processMessage(msg);
-            this.queue = this.queue.slice(1);
-            this.queueIndex++;
+                await this.processMessage(msg);
+                currentQueueIndex++;
+            }
+
+            this._queueIndex = currentQueueIndex;
+            this._queue = currentQueue;
+        } finally {
+            this.queueLock.release();
         }
     }
 
@@ -201,20 +209,27 @@ export class PopupManager {
      * Processes the given message, resulting in a
      * virtual DOM tree modification if successful
      * @param msg
+     * @implNote Thread safety: acquires the {@link nodeLock}
      */
-    private processMessage(msg: Readonly<PopupMsg>): void {
-        switch (msg?.type) {
-            case 'update': {
-                this.updateNodeHandler(msg);
-                break;
+    private async processMessage(msg: Readonly<PopupMsg>): Promise<void> {
+        await this.nodeLock.acquire();
+
+        try {
+            switch (msg?.type) {
+                case 'update': {
+                    this.updateNodeHandler(msg);
+                    break;
+                }
+                case 'remove': {
+                    this.removeNode(msg.id);
+                    break;
+                }
+                default: {
+                    console.error('Invalid message received:', msg);
+                }
             }
-            case 'remove': {
-                this.removeNode(msg.id);
-                break;
-            }
-            default: {
-                console.error('Invalid message received:', msg);
-            }
+        } finally {
+            this.nodeLock.release();
         }
     }
 
@@ -224,6 +239,7 @@ export class PopupManager {
      * @param id The virtual node id
      * @param parentId The parent virtual node id
      * @param prevSiblingId The previous sibling virtual node id
+     * @implNote Not thread safe: must only be called under the {@link nodeLock}
      */
     private updateNode(
         state: Readonly<StoredVirtualNodeProps>,
@@ -233,7 +249,7 @@ export class PopupManager {
     ): void {
         // Handling root node
         if (parentId == null) {
-            if (this.rootId != null) {
+            if (this._rootId != null) {
                 const rootMsg = [`Anomalous root node update on id:`, id];
                 const siblingMsg =
                     prevSiblingId == null
@@ -244,30 +260,21 @@ export class PopupManager {
                 return;
             }
 
-            this.rootId = id;
-            this.nodes = {
-                ...this.nodes,
-                [id]: state
-            };
+            this._rootId = id;
+            this._nodes[id] = state;
             return;
         }
 
         // Handling child node, possibly with siblings
         // If the node already exists, it's updated accordingly
-        this.nodes = {
-            ...this.nodes,
-            [parentId]: {
-                ...this.nodes[parentId],
-                childNodeIds: this.insertAfterSibling(
-                    this.nodes[parentId].childNodeIds.filter(
-                        (childId) => childId != id
-                    ),
-                    prevSiblingId,
-                    id
-                )
-            },
-            [id]: state
-        };
+        this._nodes[parentId].childNodeIds = this.insertAfterSibling(
+            this._nodes[parentId].childNodeIds.filter(
+                (childId) => childId != id
+            ),
+            prevSiblingId,
+            id
+        );
+        this._nodes[id] = state;
     }
 
     /**
@@ -275,40 +282,38 @@ export class PopupManager {
      * @param state The virtual attribute to set
      * @param id The virtual attribute id
      * @param parentId The parent virtual node id
+     * @implNote Not thread safe: must only be called under the {@link nodeLock}
      */
     private updateAttribute(
         state: Readonly<StoredVirtualAttributeProps>,
         id: Readonly<string>,
         parentId: Readonly<string>
     ): void {
-        const prevParentState = this.nodes[
+        const prevParentState = this._nodes[
             parentId
         ] as StoredVirtualElementProps;
         const parentState: StoredVirtualElementProps = {
             ...prevParentState,
             attributeIds: new Set<string>([...prevParentState.attributeIds, id])
         };
-        const nextNodes: NodeState = {
-            ...this.nodes,
-            [parentId]: parentState,
-            [id]: state
-        };
 
-        this.nodes = nextNodes;
+        this._nodes[parentId] = parentState;
+        this._nodes[id] = state;
     }
 
     /**
      * Removes the given virtual node and all
      * of its children from the virtual DOM tree
      * @param id The virtual node id to remove
+     * @implNote Not thread safe: must only be called under the {@link nodeLock}
      */
     private removeNode(id: Readonly<string>): void {
-        if (id == null || !(id in this.nodes)) {
+        if (id == null || !(id in this._nodes)) {
             console.error(`Anomalous node removal:`, id);
             return;
         }
 
-        const nextNodes = { ...this.nodes };
+        const nextNodes = { ...this._nodes };
         const node = nextNodes[id];
         const parentId = node.parentId;
 
@@ -320,12 +325,12 @@ export class PopupManager {
 
                 parent.attributeIds.delete(id);
             } else {
-                console.warn(`Removing attribute of id ${id} with no parent`);
+                console.warn('Removing attribute with no parent:', node);
             }
 
             delete nextNodes[id];
 
-            this.nodes = nextNodes;
+            this._nodes = nextNodes;
             return;
         }
 
@@ -343,6 +348,14 @@ export class PopupManager {
         while ((currentId = childNodeIds.pop()) != null) {
             const currentNode = nextNodes[currentId];
 
+            if (currentNode == null) {
+                console.warn(
+                    `Node of id ${currentId} already removed from ancestor node:`,
+                    node
+                );
+                continue;
+            }
+
             childNodeIds.push(...currentNode.childNodeIds);
 
             // Removing element attributes
@@ -357,15 +370,20 @@ export class PopupManager {
             delete nextNodes[currentId];
         }
 
-        this.nodes = nextNodes;
+        this._nodes = nextNodes;
     }
 
+    /**
+     * Updates any type of node based on the given message
+     * @param msg
+     * @implNote Not thread safe: must only be called under the {@link nodeLock}
+     */
     private updateNodeHandler(msg: Readonly<UpdateMsg>): void {
         switch (msg.nodeType) {
             case Node.ELEMENT_NODE: {
                 const parentId = msg.parentId;
 
-                if (parentId == null || !(parentId in this.nodes)) {
+                if (parentId == null || !(parentId in this._nodes)) {
                     console.error(`Anomalous node parent update:`, msg);
                     return;
                 }
@@ -382,7 +400,7 @@ export class PopupManager {
             case Node.ATTRIBUTE_NODE: {
                 const parentId = msg.parentId;
 
-                if (parentId == null || !(parentId in this.nodes)) {
+                if (parentId == null || !(parentId in this._nodes)) {
                     console.error(`Anomalous node parent update:`, msg);
                     return;
                 }
@@ -407,7 +425,7 @@ export class PopupManager {
             case Node.TEXT_NODE: {
                 const parentId = msg.parentId;
 
-                if (parentId == null || !(parentId in this.nodes)) {
+                if (parentId == null || !(parentId in this._nodes)) {
                     console.error(`Anomalous node parent update:`, msg);
                     return;
                 }
@@ -435,7 +453,7 @@ export class PopupManager {
             case Node.DOCUMENT_TYPE_NODE: {
                 const parentId = msg.parentId;
 
-                if (parentId == null || !(parentId in this.nodes)) {
+                if (parentId == null || !(parentId in this._nodes)) {
                     console.error(`Anomalous node parent update:`, msg);
                     return;
                 }
@@ -482,13 +500,23 @@ export class PopupManager {
 
     /**
      * Returns shallow copies of the current states
+     * @param timeoutMs The timeout to acquire the lock
      * @returns The current states
+     * @implNote Thread safety: acquires the {@link nodeLock}
      */
-    public getCurrentStates(): PopupProps {
-        return {
-            rootId: this.rootId,
-            nodes: { ...this.nodes }
+    public async getNodeTreeStates(timeoutMs: number): Promise<PopupProps> {
+        // Rendering takes priority over processing,
+        // but if processing takes too long, then processing takes priority
+        await withTimeout(this.nodeLock, timeoutMs).acquire(1);
+
+        const out = {
+            rootId: this._rootId,
+            nodes: { ...this._nodes }
         };
+
+        this.nodeLock.release();
+
+        return out;
     }
 
     /**

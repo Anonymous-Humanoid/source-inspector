@@ -1,3 +1,4 @@
+import { E_TIMEOUT } from 'async-mutex';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { PopupManager } from './stateManager';
@@ -16,10 +17,22 @@ if (container != null) {
         // Creating asynchronous rendering loop
         const Popup = PopupManager.Popup;
         const RENDER_INTERVAL_MS = 250;
-        const render = () => {
-            const states = popupManager.getCurrentStates();
+        const render = async () => {
+            try {
+                const states = await popupManager.getNodeTreeStates(
+                    RENDER_INTERVAL_MS
+                );
 
-            root.render(<Popup rootId={states.rootId} nodes={states.nodes} />);
+                root.render(
+                    <Popup rootId={states.rootId} nodes={states.nodes} />
+                );
+            } catch (err) {
+                if (err === E_TIMEOUT) {
+                    console.warn('Render skipped on account of lock timeout');
+                } else {
+                    throw err;
+                }
+            }
         };
         render();
         const renderIntervalId = setInterval(render, RENDER_INTERVAL_MS);

@@ -2,11 +2,6 @@
 
 ## Functional Priorities
 
-- State manager queueing instance variables need to be asynchronous, as
-  too many updates can cause desynchronized calls. This has been tested.
-  For the future developer's sanity, state instance variables should also
-  be asynchronous. `setState` equivalents should be defined for parity
-  with React.
 - Add Firefox extension support.
   See: [signing](https://extensionworkshop.com/documentation/publish/)
 - Write `README.md`
@@ -17,8 +12,9 @@
 - Fix duplicate attribute names when adding a second or more attributes
   to an element using DevTool's "Edit as HTML" function
   (possible race condition)
-- Fix adding nodes with previous node IDs
+- Fix adding nodes with previous node IDs,
   (e.g, removing a node in DevTools and then undoing the action)
+  as children and attributes are present without a mutation event
 - For security reasons, validate all messages to ensure no compromisation
   has occurred within any untrustworthy part of the extension
   (see: the [issue tracker](https://issuetracker.google.com/issues/311491887)
