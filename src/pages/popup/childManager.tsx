@@ -220,6 +220,11 @@ export function ChildManager({ id }: { readonly id: string }): ReactNode {
     const nodes = useContext<NodeState>(NodeContext);
     const node = nodes[id];
 
+    if (node == null) {
+        console.error(`Couldn't render unknown node of id: ${id}`);
+        return;
+    }
+
     switch (node.nodeType) {
         case Node.ELEMENT_NODE: {
             return renderElement(id, node as StoredVirtualElementProps, nodes);
