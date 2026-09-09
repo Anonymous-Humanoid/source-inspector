@@ -1,3 +1,4 @@
+import path from 'node:path';
 import { SourceMapGenerator } from 'source-map';
 import { type Tap } from 'tapable';
 import type {
@@ -185,8 +186,8 @@ export default class GenerateFilePlugin implements WebpackPluginInstance {
     ): string {
         const replacer = (key: string, value: any) => {
             // Manifest requires forward slashes in paths
-            return typeof value === 'string'
-                ? value.replaceAll('\\', '/')
+            return typeof value === 'string' && path.sep !== '/'
+                ? value.replaceAll(path.sep, '/')
                 : value;
         };
 
