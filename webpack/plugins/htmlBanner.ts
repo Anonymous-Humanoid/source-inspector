@@ -1,4 +1,4 @@
-import HtmlWebpackPlugin from 'html-webpack-plugin';
+// import HtmlWebpackPlugin from 'html-webpack-plugin';
 import { SourceMapConsumer, SourceMapGenerator } from 'source-map';
 import { type Tap } from 'tapable';
 import type { Compiler, WebpackPluginInstance } from 'webpack';
@@ -48,67 +48,67 @@ export default class HtmlBannerWebpackPlugin implements WebpackPluginInstance {
     }
 
     apply(compiler: Compiler) {
-        compiler.hooks.compilation.tap(this.plugin, (compilation) => {
-            // beforeEmit needed to supersede minimization, see:
-            // https://github.com/jantimon/html-webpack-plugin?tab=readme-ov-file#events
-            HtmlWebpackPlugin.getCompilationHooks(
-                compilation
-            ).beforeEmit.tapAsync(this.plugin, async (data, cb) => {
-                if (this.options.footer) {
-                    const banner = '\n' + this.options.banner;
+        // compiler.hooks.compilation.tap(this.plugin, (compilation) => {
+        //     // beforeEmit needed to supersede minimization, see:
+        //     // https://github.com/jantimon/html-webpack-plugin?tab=readme-ov-file#events
+        //     HtmlWebpackPlugin.getCompilationHooks(
+        //         compilation
+        //     ).beforeEmit.tapAsync(this.plugin, async (data, cb) => {
+        //         if (this.options.footer) {
+        //             const banner = '\n' + this.options.banner;
 
-                    data.html += banner;
-                }
-                else {
-                    data.html = `${this.options.banner}\n${data.html}`;
+        //             data.html += banner;
+        //         }
+        //         else {
+        //             data.html = `${this.options.banner}\n${data.html}`;
 
-                    if (this.options.sourceMap === true) {
-                        const lines = this.options.banner.split('\n').length;
+        //             if (this.options.sourceMap === true) {
+        //                 const lines = this.options.banner.split('\n').length;
 
-                        for (const [name, oldSource] of Object.entries(compilation.assets)) {
-                            if (!name.endsWith('.html.map')) {
-                                continue;
-                            }
+        //                 for (const [name, oldSource] of Object.entries(compilation.assets)) {
+        //                     if (!name.endsWith('.html.map')) {
+        //                         continue;
+        //                     }
 
-                            const rawSourceMap: RawSourceMap = JSON.parse(oldSource.source().toString());
-                            // https://github.com/mozilla/source-map#sourcemapconsumerinitializeoptions
-                            const consumer = await new SourceMapConsumer(rawSourceMap);
-                            const tmpSourceMap = new SourceMapGenerator();
+        //                     const rawSourceMap: RawSourceMap = JSON.parse(oldSource.source().toString());
+        //                     // https://github.com/mozilla/source-map#sourcemapconsumerinitializeoptions
+        //                     const consumer = await new SourceMapConsumer(rawSourceMap);
+        //                     const tmpSourceMap = new SourceMapGenerator();
 
-                            consumer.eachMapping((mapping) => {
-                                tmpSourceMap.addMapping({
-                                    source: mapping.source,
-                                    name: mapping.name,
-                                    original: {
-                                        line: mapping.originalLine,
-                                        column: mapping.originalColumn
-                                    },
-                                    generated: {
-                                        line: mapping.originalLine + lines,
-                                        column: mapping.originalColumn
-                                    }
-                                });
-                            });
+        //                     consumer.eachMapping((mapping) => {
+        //                         tmpSourceMap.addMapping({
+        //                             source: mapping.source,
+        //                             name: mapping.name,
+        //                             original: {
+        //                                 line: mapping.originalLine,
+        //                                 column: mapping.originalColumn
+        //                             },
+        //                             generated: {
+        //                                 line: mapping.originalLine + lines,
+        //                                 column: mapping.originalColumn
+        //                             }
+        //                         });
+        //                     });
 
-                            const sourceMap = SourceMapGenerator.fromSourceMap(consumer).toJSON();
+        //                     const sourceMap = SourceMapGenerator.fromSourceMap(consumer).toJSON();
 
-                            consumer.destroy();
+        //                     consumer.destroy();
 
-                            sourceMap.mappings = tmpSourceMap.toJSON().mappings;
+        //                     sourceMap.mappings = tmpSourceMap.toJSON().mappings;
 
-                            const newSource = createSourceMapSource({
-                                target: name,
-                                sourceMap: sourceMap
-                            });
+        //                     const newSource = createSourceMapSource({
+        //                         target: name,
+        //                         sourceMap: sourceMap
+        //                     });
 
-                            compilation.updateAsset(name, newSource);
-                        }
-                    }
-                }
+        //                     compilation.updateAsset(name, newSource);
+        //                 }
+        //             }
+        //         }
 
-                // Telling Webpack to move on
-                cb(null, data);
-            });
-        });
+        //         // Telling Webpack to move on
+        //         cb(null, data);
+        //     });
+        // });
     }
 }

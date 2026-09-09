@@ -1,3 +1,4 @@
+import assert from 'node:assert/strict';
 import path from 'node:path';
 import TerserPlugin from 'terser-webpack-plugin';
 import webpack from 'webpack';
@@ -12,6 +13,11 @@ import {
 const webpackConfig: webpack.Configuration = {
     context: PROJECT_ROOT,
     mode: IS_DEV_MODE ? 'development' : 'production',
+    experiments: {
+        html: true,
+        css: false, // Can't use with css-loader or style-loader
+        //futureDefaults: true // For testing
+    },
     // Extensions cannot use eval
     devtool: IS_DEV_MODE
         ? 'hidden-cheap-module-source-map'
@@ -44,10 +50,28 @@ const webpackConfig: webpack.Configuration = {
         },
         popup: {
             import: [
-                path.join(PROJECT_ROOT, 'src', 'pages', 'popup', 'index.tsx')
-            ],
-            // HTMLWebpackPlugin will escape backslashes, which leads to invalid paths
-            filename: path.join('popup', 'index.js').replaceAll('\\', '/')
+                path.join(
+                    PROJECT_ROOT,
+                    'src',
+                    'pages',
+                    'popup',
+                    'index.html'
+                ),
+                path.join(
+                    PROJECT_ROOT,
+                    'src',
+                    'pages',
+                    'popup',
+                    'index.tsx'
+                ),
+                path.join(
+                    PROJECT_ROOT,
+                    'src',
+                    'pages',
+                    'popup',
+                    'index.scss'
+                )
+            ]
         },
         background: {
             import: [
@@ -63,23 +87,47 @@ const webpackConfig: webpack.Configuration = {
         },
         options: {
             import: [
-                path.join(PROJECT_ROOT, 'src', 'pages', 'options', 'index.tsx')
-            ],
-            // HTMLWebpackPlugin will escape backslashes, which leads to invalid paths
-            filename: path.join('options', 'index.js').replaceAll('\\', '/')
+                path.join(
+                    PROJECT_ROOT,
+                    'src',
+                    'pages',
+                    'options',
+                    'index.html'
+                ),
+                path.join(
+                    PROJECT_ROOT,
+                    'src',
+                    'pages',
+                    'options',
+                    'index.tsx'
+                ),
+                path.join(
+                    PROJECT_ROOT,
+                    'src',
+                    'pages',
+                    'options',
+                    'index.scss'
+                )
+            ]
         }
     },
     output: {
         path: OUTPUT_ABS_DIR,
         clean: true,
         publicPath: '/',
-        iife: true
+        iife: true,
+        htmlFilename: config.output.htmlFilenameTemplate,
+        htmlChunkFilename: config.output.filenameTemplate('.html'),
+        cssFilename: config.output.filenameTemplate('.css'),
+        cssChunkFilename: config.output.filenameTemplate('.css'),
+        filename: config.output.filenameTemplate('.js'),
+        chunkFilename: config.output.filenameTemplate('.js')
     },
     resolve: {
         extensions: [
             ...config.assets.resolveExts,
-            ...config.js.resolveExts,
-            ...config.css.resolveExts
+            ...config.js.resolveExts, // JS before CSS for index import conflicts
+            ...config.css.resolveExts,
         ]
     },
     module: {
@@ -87,15 +135,13 @@ const webpackConfig: webpack.Configuration = {
             ...config.assets.moduleRules,
             ...config.css.moduleRules,
             ...config.js.moduleRules,
-            ...config.html.moduleRules
         ]
     },
     plugins: [
         new webpack.ProgressPlugin(),
         ...config.assets.plugins,
-        ...config.js.plugins,
         ...config.css.plugins,
-        ...config.html.plugins
+        ...config.js.plugins,
     ],
     watchOptions: {
         // https://npmjs.com/package/fork-ts-checker-webpack-plugin#installation
